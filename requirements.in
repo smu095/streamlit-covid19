@@ -1,0 +1,19 @@
+# Data science
+numpy
+pandas
+matplotlib
+pyjanitor
+seaborn
+scipy
+jupyter
+streamlit
+
+# Linting
+flake8
+black
+mypy
+isort
+pandas-vet
+
+# Data engineering
+luigi
