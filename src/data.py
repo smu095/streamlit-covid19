@@ -1,80 +1,122 @@
-import pandas as pd
-import janitor
 from datetime import datetime
 from urllib.error import HTTPError
 
-_URL = "https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-"
-_TODAY = datetime.today().strftime("%Y-%m-%d")
+import janitor
+import numpy as np
+import pandas as pd
+
+US_DATA = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases.csv"  # noqa: E501
+CASES_WORLDWIDE = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv"  # noqa: E501
+TIME_SERIES = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv"  # noqa: 501
 
 
-def process_data(date: str = _TODAY) -> pd.DataFrame:
-    """Returns DataFrame of worldwide COVID-19 data.
-
-    The data contains the following columns:
-
-        - date
-        - country or territory name
-        - geoid
-        - population
-        - cases
-        - deaths
-        - cumulative cases
-        - cumulative deaths
-
-    Data downloaded from the European Centre for Disease Prevention and Control (ECDP).
-
-    Parameters
-    ----------
-    date : str, optional
-        Date for ECDP data, by default _TODAY
-
-    Returns
-    -------
-    pd.DataFrame
-    """
-    # Reading data from URL
-    try:
-        data_url = _URL + date + ".xlsx"
-        raw = pd.read_excel(data_url)
-    except HTTPError:
-        raise ValueError(f"Could not find data for {date}.")
-
-    # Simple preprocessing
-    cleaned = raw.clean_names()
-    to_cat = dict.fromkeys(list(cleaned.select_dtypes("object")), "category")
-
-    processed = (
-        cleaned.rename_column("daterep", "date")
-        .remove_columns(["day", "month", "year"])
-        .astype(to_cat)
-        .sort_values(by=["geoid", "date"])
+def _get_world_population():
+    pop = pd.read_csv("./data/worldbank-population-2018.csv").rename_column(
+        "2018", "population"
     )
+    return pop
 
-    # Adding cumulative counts
-    cumulatives = (
-        processed.groupby("countries_and_territories")[["cases", "deaths"]]
-        .cumsum()
-        .rename_columns({"cases": "cumulative_cases", "deaths": "cumulative_deaths"})
-    )
 
-    final = (
-        processed.join(cumulatives)
+def _get_iso_codes():
+    iso_codes = pd.read_csv("./data/iso-codes.csv")
+    to_rename = {
+        "Russian Federation": "Russia",
+        "Bolivia (Plurinational State of)": "Bolivia",
+        "Korea, Republic of": "Korea, South",
+        "Brunei Darussalam": "Brunei",
+        "Moldova, Republic of": "Moldova",
+        "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+        "Syrian Arab Republic": "Syria",
+        "Venezuela (Bolivarian Republic of)": "Venezuela",
+        "Tanzania, United Republic of": "Tanzania",
+        "Iran (Islamic Republic of)": "Iran",
+        "Côte d'Ivoire": "Cote d'Ivoire",
+        "Myanmar": "Burma",
+        "Congo": "Congo (Brazzaville)",
+        "Congo, Democratic Republic of the": "Congo (Kinshasa)",
+        "Lao People's Democratic Republic": "Laos",
+        "Taiwan, Province of China": "Taiwan*",
+        "United States of America": "US",
+        "Viet Nam": "Vietnam",
+        "Palestine, State of": "West Bank and Gaza",
+    }
+    iso_codes["country_region"] = iso_codes["country_region"].replace(to_rename)
+    return iso_codes
+
+
+def _to_date(x):
+    return pd.to_datetime(x).normalize()
+
+
+def get_most_affected(world_source, n: int = 10):
+    most_affected = (
+        world_source.sort_values(by="confirmed", ascending=False)
+        .head(10)
         .select_columns(
-            [
-                "date",
-                "countries_and_territories",
-                "geoid",
-                "pop_data_2018",
-                "cases",
-                "cumulative_cases",
-                "deaths",
-                "cumulative_deaths",
-            ]
+            ["country_region", "confirmed", "active", "recovered", "deaths"]
         )
-        .set_index("date")
     )
+    most_affected["active"] = np.where(
+        most_affected[["confirmed", "deaths", "recovered"]].sum(axis=1)
+        != most_affected["confirmed"],
+        most_affected["confirmed"] - most_affected[["deaths", "recovered"]].sum(axis=1),
+        most_affected["active"],
+    )
+    melted = most_affected.remove_columns("confirmed").melt(
+        id_vars="country_region", var_name="status", value_name="count"
+    )
+    return melted
 
-    # TODO: Write a test for expected columns
-    # TODO: Maybe chance to learn great expectations?
 
-    return final
+def get_country_data(time_source, country):
+    time_data = time_source[time_source["country_region"] == country]
+
+    first_case = time_data.loc[time_data["confirmed"] > 0, "date"].min()
+    last_update = time_data["date"].max()
+
+    return time_data, first_case, last_update
+
+
+def _get_us_cases(url: str = US_DATA):
+    cases = pd.read_csv(url)
+    cleaned = (
+        cases.clean_names()
+        .transform_column("last_update", _to_date)
+        .filter_on("country_region == 'US'")
+    )
+    return cleaned
+
+
+def _get_worldwide_cases(url: str = CASES_WORLDWIDE):
+    cases = pd.read_csv(url)
+    cleaned = (
+        cases.clean_names()
+        .rename_column("long_", "lon")
+        .transform_column("last_update", _to_date)
+        .filter_on("country_region == 'Diamond Princess'", complement=True)
+        .filter_on("country_region == 'Holy See'", complement=True)
+        .sort_values(by="country_region")
+    )
+    iso_join = cleaned.merge(_get_iso_codes(), on="country_region")
+    pop_join = iso_join.merge(_get_world_population(), on="country_region")
+
+    pop_join["sick_per_100k"] = (
+        pop_join["confirmed"] / pop_join["population"]
+    ) * 10 ** 5
+
+    return pop_join
+
+
+def _get_time_series_cases(url: str = TIME_SERIES):
+    time_series = pd.read_csv(url)
+    cleaned = (
+        time_series.clean_names()
+        .rename_column("last_update", "date")
+        .transform_column("date", _to_date)
+        .remove_columns(["recovered", "active", "delta_recovered"])
+    )
+    cleaned["norm_confirmed"] = cleaned.groupby("country_region")["confirmed"].apply(
+        lambda x: x / x.max()
+    )
+    unique_countries = tuple(cleaned["country_region"].unique())
+    return cleaned, unique_countries
