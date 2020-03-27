@@ -13,6 +13,7 @@ from src.data import (
     get_country_data,
 )
 from src.plots import (
+    create_heatmap,
     create_map_plot,
     create_top_n_barplot,
     create_world_barplot,
@@ -82,26 +83,17 @@ def main():
 
         # World heatmap
         if view == "Infection heatmap":
-            heatmap = (
-                alt.Chart(time_source)
-                .mark_rect()
-                .encode(
-                    alt.X("monthdate(date):T", title="Date"),
-                    alt.Y("country_region:N", title=""),
-                    color=alt.Color(
-                        "norm_confirmed:Q",
-                        legend=None,
-                        scale=alt.Scale(scheme="lightgreyred"),
-                    ),
-                    tooltip=[
-                        alt.Tooltip("country_region:N", title="Country"),
-                        alt.Tooltip(
-                            "norm_confirmed:Q", title="Proportion of confirmed cases"
-                        ),
-                    ],
-                )
-                .properties(title="Test", width=800)
-            )
+            random_countries = np.random.choice(unique_countries, size=20)
+            options = st.multiselect("Select countries to display", unique_countries)
+
+            if len(options) > 0:
+                selection = time_source[time_source["country_region"].isin(options)]
+            else:
+                selection = time_source[
+                    time_source["country_region"].isin(random_countries)
+                ]
+
+            heatmap = create_heatmap(selection, "norm_confirmed")
             st.altair_chart(heatmap)
 
     # COUNTRIES -----------------------------------------------

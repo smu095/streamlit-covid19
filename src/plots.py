@@ -117,3 +117,23 @@ def create_world_lineplot(time_source):
         .properties(title="Timeline of confirmed cases", width=600, height=300)
     )
     return time_chart
+
+
+def create_heatmap(selection, column):
+    heatmap = (
+        alt.Chart(selection)
+        .mark_rect()
+        .encode(
+            alt.X("monthdate(date):T", title="Date"),
+            alt.Y("country_region:N", title=""),
+            color=alt.Color(
+                f"{column}:Q", legend=None, scale=alt.Scale(scheme="yelloworangered"),
+            ),
+            tooltip=[
+                alt.Tooltip("country_region:N", title="Country"),
+                alt.Tooltip(f"{column}:Q", title="Cases pr. 100k"),
+            ],
+        )
+        .properties(title="Proportion of confirmed cases", width=800)
+    )
+    return heatmap

@@ -1,6 +1,3 @@
-from datetime import datetime
-from urllib.error import HTTPError
-
 import janitor
 import numpy as np
 import pandas as pd
@@ -15,6 +12,9 @@ def _get_world_population():
         "2018", "population"
     )
     return pop
+
+
+WORLD_POP = _get_world_population()
 
 
 def _get_iso_codes():
@@ -42,6 +42,9 @@ def _get_iso_codes():
     }
     iso_codes["country_region"] = iso_codes["country_region"].replace(to_rename)
     return iso_codes
+
+
+ISO_CODES = _get_iso_codes()
 
 
 def _to_date(x):
@@ -97,10 +100,11 @@ def _get_worldwide_cases(url: str = CASES_WORLDWIDE):
         .filter_on("country_region == 'Holy See'", complement=True)
         .sort_values(by="country_region")
     )
-    iso_join = cleaned.merge(_get_iso_codes(), on="country_region")
-    pop_join = iso_join.merge(_get_world_population(), on="country_region")
 
-    pop_join["sick_per_100k"] = (
+    iso_join = cleaned.merge(ISO_CODES, on="country_region")
+    pop_join = iso_join.merge(WORLD_POP, on="country_region")
+
+    pop_join["sick_pr_100k"] = (
         pop_join["confirmed"] / pop_join["population"]
     ) * 10 ** 5
 
@@ -115,8 +119,17 @@ def _get_time_series_cases(url: str = TIME_SERIES):
         .transform_column("date", _to_date)
         .remove_columns(["recovered", "active", "delta_recovered"])
     )
-    cleaned["norm_confirmed"] = cleaned.groupby("country_region")["confirmed"].apply(
+
+    pop_join = cleaned.merge(WORLD_POP, how="left", on="country_region")
+    pop_join["sick_pr_100k"] = (
+        pop_join["confirmed"] / pop_join["population"]
+    ) * 10 ** 5
+    pop_join["std_confirmed"] = pop_join.groupby("country_region")["confirmed"].apply(
+        lambda x: (x - x.mean()) / x.std()
+    )
+    pop_join["norm_confirmed"] = pop_join.groupby("country_region")["confirmed"].apply(
         lambda x: x / x.max()
     )
-    unique_countries = tuple(cleaned["country_region"].unique())
-    return cleaned, unique_countries
+    unique_countries = tuple(pop_join["country_region"].unique())
+
+    return pop_join, unique_countries
