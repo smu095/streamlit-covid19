@@ -1,271 +1,327 @@
 import altair as alt
+import janitor
 import numpy as np
 import pandas as pd
-import janitor
-from datetime import datetime
-from urllib.error import HTTPError
 import streamlit as st
+from vega_datasets import data
 
-_URL = "https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-"
-_TODAY = datetime.today().strftime("%Y-%m-%d")
+US_DATA = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases.csv"  # noqa: E501
+CASES_WORLDWIDE = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv"  # noqa: E501
+TIME_SERIES = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv"  # noqa: 501
+
+
+def _get_world_population():
+    pop = pd.read_csv("./data/worldbank-population-2018.csv").rename_column(
+        "2018", "population"
+    )
+    return pop
+
+
+def _get_iso_codes():
+    iso_codes = pd.read_csv("./data/iso-codes.csv")
+    to_rename = {
+        "Russian Federation": "Russia",
+        "Bolivia (Plurinational State of)": "Bolivia",
+        "Korea, Republic of": "Korea, South",
+        "Brunei Darussalam": "Brunei",
+        "Moldova, Republic of": "Moldova",
+        "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+        "Syrian Arab Republic": "Syria",
+        "Venezuela (Bolivarian Republic of)": "Venezuela",
+        "Tanzania, United Republic of": "Tanzania",
+        "Iran (Islamic Republic of)": "Iran",
+        "Côte d'Ivoire": "Cote d'Ivoire",
+        "Myanmar": "Burma",
+        "Congo": "Congo (Brazzaville)",
+        "Congo, Democratic Republic of the": "Congo (Kinshasa)",
+        "Lao People's Democratic Republic": "Laos",
+        "Taiwan, Province of China": "Taiwan*",
+        "United States of America": "US",
+        "Viet Nam": "Vietnam",
+        "Palestine, State of": "West Bank and Gaza",
+    }
+    iso_codes["country_region"] = iso_codes["country_region"].replace(to_rename)
+    return iso_codes
+
+
+def _to_date(x):
+    return pd.to_datetime(x).normalize()
 
 
 @st.cache
-def process_data(date: str = _TODAY) -> pd.DataFrame:
-    """Returns DataFrame of worldwide COVID-19 data.
-
-    The data contains the following columns:
-
-        - date
-        - country or territory name
-        - geoid
-        - population
-        - cases
-        - deaths
-        - cumulative cases
-        - cumulative deaths
-
-    Data downloaded from the European Centre for Disease Prevention and Control (ECDP).
-
-    Parameters
-    ----------
-    date : str, optional
-        Date for ECDP data, by default _TODAY
-
-    Returns
-    -------
-    pd.DataFrame
-    """
-    # Reading data from URL
-    try:
-        data_url = _URL + date + ".xlsx"
-        raw = pd.read_excel(data_url)
-    except HTTPError:
-        raise ValueError(f"Could not find data for {date}.")
-
-    # Simple preprocessing
-    cleaned = raw.clean_names()
-    # to_cat = dict.fromkeys(list(cleaned.select_dtypes("object")), "category")
-
-    processed = (
-        cleaned.rename_column("daterep", "date").remove_columns(
-            ["day", "month", "year"]
-        )
-        # .astype(to_cat)
-        .sort_values(by=["geoid", "date"])
+def get_us_cases(url: str = US_DATA):
+    cases = pd.read_csv(url)
+    cleaned = (
+        cases.clean_names()
+        .transform_column("last_update", _to_date)
+        .filter_on("country_region == 'US'")
     )
+    return cleaned
 
-    processed["countries_and_territories"] = processed[
-        "countries_and_territories"
-    ].str.replace("_", " ")
 
-    # Adding cumulative counts
-    cumulatives = (
-        processed.groupby("countries_and_territories")[["cases", "deaths"]]
-        .cumsum()
-        .rename_columns({"cases": "cumulative_cases", "deaths": "cumulative_deaths"})
+@st.cache
+def get_worldwide_cases(url: str = CASES_WORLDWIDE):
+    cases = pd.read_csv(url)
+    cleaned = (
+        cases.clean_names()
+        .rename_column("long_", "lon")
+        .transform_column("last_update", _to_date)
+        .filter_on("country_region == 'Diamond Princess'", complement=True)
+        .filter_on("country_region == 'Holy See'", complement=True)
+        .sort_values(by="country_region")
     )
+    iso_join = cleaned.merge(_get_iso_codes(), on="country_region")
+    pop_join = iso_join.merge(_get_world_population(), on="country_region")
 
-    final = (
-        processed.join(cumulatives)
+    pop_join["sick_per_100k"] = (
+        pop_join["confirmed"] / pop_join["population"]
+    ) * 10 ** 5
+
+    return pop_join
+
+
+@st.cache
+def get_time_series_cases(url: str = TIME_SERIES):
+    time_series = pd.read_csv(url)
+    cleaned = (
+        time_series.clean_names()
+        .rename_column("last_update", "date")
+        .transform_column("date", _to_date)
+        .remove_columns(["recovered", "active", "delta_recovered"])
+    )
+    cleaned["norm_confirmed"] = cleaned.groupby("country_region")["confirmed"].apply(
+        lambda x: x / x.max()
+    )
+    unique_countries = tuple(cleaned["country_region"].unique())
+    return cleaned, unique_countries
+
+
+def get_most_affected(world_source, n: int = 10):
+    most_affected = (
+        world_source.sort_values(by="confirmed", ascending=False)
+        .head(10)
         .select_columns(
-            [
-                "date",
-                "countries_and_territories",
-                "geoid",
-                "pop_data_2018",
-                "cases",
-                "cumulative_cases",
-                "deaths",
-                "cumulative_deaths",
-            ]
+            ["country_region", "confirmed", "active", "recovered", "deaths"]
         )
-        .reset_index(drop=True)
     )
+    most_affected["active"] = np.where(
+        most_affected[["confirmed", "deaths", "recovered"]].sum(axis=1)
+        != most_affected["confirmed"],
+        most_affected["confirmed"] - most_affected[["deaths", "recovered"]].sum(axis=1),
+        most_affected["active"],
+    )
+    melted = most_affected.remove_columns("confirmed").melt(
+        id_vars="country_region", var_name="status", value_name="count"
+    )
+    return melted
 
-    # TODO: Write a test for expected columns
-    # TODO: Maybe chance to learn great expectations?
 
-    return final
+def get_country_data(time_source, country):
+    time_data = time_source[time_source["country_region"] == country]
 
+    first_case = time_data.loc[time_data["confirmed"] > 0, "date"].min()
+    last_update = time_data["date"].max()
 
-def relative_change(df: pd.DataFrame, col_name: str) -> pd.Series:
-    """Return relative change compared to previous day.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-    col_name : str
-
-    Returns
-    -------
-    pd.Series
-    """
-    relative_change = 1 - (df[col_name].shift(1) / df[col_name])
-    relative_change *= 100
-    return relative_change
+    return time_data, first_case, last_update
 
 
 def main():
-    """Run the app."""
-    # TODO: Create radio buttons that divide themes into reasonable sections
-    source = process_data("2020-03-25")
-    unique_countries = tuple(source["countries_and_territories"].unique())
+    us_source = get_us_cases()
+    world_source = get_worldwide_cases()
+    time_source, unique_countries = get_time_series_cases()
 
     st.sidebar.title("Explore")
-    st.sidebar.markdown(
-        "By default, start date is set to date of first registered case."
-    )
-    country = st.sidebar.selectbox("Choose country", unique_countries)
-    data = source[source["countries_and_territories"] == country]
-
-    first_registered_case = data.loc[data["cumulative_cases"] > 0, "date"].min()
-    most_recent_date = data["date"].max()
-
-    start = st.sidebar.date_input("Start date", first_registered_case)
-    end = st.sidebar.date_input("End date", most_recent_date)
-    date_mask = (data["date"].dt.date >= start) & (data["date"].dt.date <= end)
-    interval_data = data[date_mask]
-
-    st.title(country)
-
-    st.subheader("At a glance")
-
-    # TODO: Functionalise
-    summary = interval_data.agg(
-        {
-            "countries_and_territories": "unique",
-            "pop_data_2018": "unique",
-            "cases": "sum",
-            "deaths": "sum",
-        }
-    )
-    summary["death_rate"] = summary["deaths"] / summary["cases"]
-    summary["infected_per_capita"] = summary["cases"] / summary["pop_data_2018"]
-    summary["time_since_first_registered_case"] = (
-        most_recent_date - first_registered_case
+    options = st.sidebar.radio(
+        "Choose level of data to display", ("World", "Countries")
     )
 
-    summary = summary.rename_columns({"pop_data_2018": "population"})
-    summary.columns = [col.capitalize().replace("_", " ") for col in summary.columns]
-
-    # TODO: Add same statistics for rest of world for comparison
-    st.table(summary.set_index("Countries and territories"))
-
-    display = st.checkbox("Show data")
-    if display:
-        st.dataframe(interval_data)
-
-    # TODO: Stacked area not correct here. Need to figure out proportions.
-    cumulative_df = interval_data.select_columns(
-        ["date", "cumulative_cases", "cumulative_deaths"]
-    ).melt(
-        "date",
-        value_vars=["cumulative_cases", "cumulative_deaths"],
-        var_name="statistic",
-    )
-
-    cumulative_chart = (
-        alt.Chart(cumulative_df, height=300, width=600)
-        .mark_area(fillOpacity=0.7)
-        .encode(
-            x=alt.X("date:T", title="Date"),
-            y=alt.Y("value:Q", title="Cumulative cases"),
-            color=alt.Color("statistic:N", legend=alt.Legend(title="Statistics")),
-            tooltip=[
-                alt.Tooltip("date:T", title="Date"),
-                alt.Tooltip("statistic:N", title="Category"),
-                alt.Tooltip("value:Q", title="Total"),
-            ],
+    # WORLD -----------------------------------------------
+    if options == "World":
+        st.sidebar.subheader("World options")
+        view = st.sidebar.selectbox(
+            "Which data would you like to see?", ["Summary", "Infection heatmap"]
         )
-        .properties(title="Total number of confirmed cases and deaths")
-        .interactive()
-    )
 
-    # type="log" argument in alt.Scale doesn't seem to work for some reason, temporary hack follows
-    log_df = cumulative_df.copy().transform_column("value", np.log)
-    ymax = log_df.groupby("statistic")["value"].max().sum()
-    yrange = (0, ymax)
+        if view == "Summary":
+            st.header("World")
 
-    log_chart = (
-        alt.Chart(log_df, height=300, width=600)
-        .mark_area(fillOpacity=0.7)
-        .encode(
-            x=alt.X("date:T", title="Date"),
-            y=alt.Y(
-                "value:Q",
-                title="Cumulative cases (log-scale)",
-                scale=alt.Scale(domain=yrange),
-            ),
-            color=alt.Color("statistic:N", legend=alt.Legend(title="Statistics")),
-            tooltip=[
-                alt.Tooltip("date:T", title="Date"),
-                alt.Tooltip("statistic:N", title="Category"),
-                alt.Tooltip("value:Q", title="Total"),
-            ],
+            # Map plot
+            source = alt.topo_feature(data.world_110m.url, "countries")
+            background = alt.Chart(source).mark_geoshape(fill="white")
+
+            foreground = (
+                alt.Chart(source)
+                .mark_geoshape(stroke="black", strokeWidth=0.15)
+                .encode(
+                    color=alt.Color(
+                        "sick_per_100k:N",
+                        scale=alt.Scale(scheme="lightgreyred"),
+                        legend=None,
+                    ),
+                    tooltip=[
+                        alt.Tooltip("country_region:N", title="Country"),
+                        alt.Tooltip("sick_per_100k:Q", title="Cases pr. 100k"),
+                    ],
+                )
+                .transform_lookup(
+                    lookup="id",
+                    from_=alt.LookupData(
+                        world_source, "id", ["sick_per_100k", "country_region"]
+                    ),
+                )
+            )
+
+            final_map = (
+                (background + foreground)
+                .configure_view(strokeWidth=0)
+                .properties(width=700, height=400)
+                .project("naturalEarth1")
+            )
+            st.altair_chart(final_map)
+
+            # World summary
+            world_summary = (
+                world_source[["confirmed", "active", "deaths", "recovered"]]
+                .sum()
+                .reset_index(name="count")
+                .rename_column("index", "status")
+            )
+            bar_world = (
+                alt.Chart(world_summary)
+                .mark_bar()
+                .encode(
+                    y=alt.Y("status:N", title="", sort="-x"),
+                    x=alt.X("count:Q", title="Count"),
+                    color=alt.Color("status:N"),
+                    tooltip=["count:Q"],
+                )
+                .interactive()
+                .properties(title="Summary statistics", width=600, height=200)
+                .configure_legend(orient="top")
+            )
+            st.altair_chart(bar_world)
+
+            # Most affected nations
+            most_affected = get_most_affected(world_source, n=10)
+            top_n_bar = (
+                alt.Chart(most_affected)
+                .mark_bar()
+                .encode(
+                    y=alt.Y("country_region:N", title="", sort="-x"),
+                    x=alt.X("sum(count):Q", title="Count"),
+                    color=alt.Color("status:N", scale=alt.Scale(scheme="tableau20")),
+                    tooltip=[
+                        alt.Tooltip("country_region:N", title="Country"),
+                        alt.Tooltip("sum(count):Q", title="Count"),
+                        alt.Tooltip("status:N", title="Status"),
+                    ],
+                )
+                .interactive()
+                .properties(title="10 most affected nations", width=600, height=300)
+                .configure_legend(orient="top")
+            )
+            st.altair_chart(top_n_bar)
+
+            # World time-series
+            highlight = alt.selection(
+                type="single", on="mouseover", fields=["country_region"], nearest=True
+            )
+            time_base = (
+                alt.Chart(time_source)
+                .mark_line()
+                .encode(
+                    x=alt.X("date:T", title="Date"),
+                    y=alt.Y("confirmed:Q", title="Confirmed cases"),
+                    color=alt.Color("country_region:N", legend=None),
+                )
+            )
+            time_points = (
+                time_base.mark_circle()
+                .encode(
+                    opacity=alt.value(0),
+                    tooltip=[
+                        alt.Tooltip("country_region:N", title="Country"),
+                        alt.Tooltip("confirmed:N", title="Confirmed cases"),
+                    ],
+                )
+                .add_selection(highlight)
+            )
+            time_lines = time_base.mark_line().encode(
+                size=alt.condition(~highlight, alt.value(1), alt.value(3))
+            )
+            time_chart = (
+                (time_points + time_lines)
+                .interactive()
+                .properties(title="Timeline of confirmed cases", width=600, height=300)
+            )
+            st.altair_chart(time_chart)
+
+        # World heatmap
+        if view == "Infection heatmap":
+            heatmap = (
+                alt.Chart(time_source)
+                .mark_rect()
+                .encode(
+                    alt.X("monthdate(date):T", title="Date"),
+                    alt.Y("country_region:N", title=""),
+                    color=alt.Color(
+                        "norm_confirmed:Q",
+                        legend=None,
+                        scale=alt.Scale(scheme="lightgreyred"),
+                    ),
+                    tooltip=[
+                        alt.Tooltip("country_region:N", title="Country"),
+                        alt.Tooltip(
+                            "norm_confirmed:Q", title="Proportion of confirmed cases"
+                        ),
+                    ],
+                )
+                .properties(title="Test", width=800)
+            )
+            st.altair_chart(heatmap)
+
+    # COUNTRIES -----------------------------------------------
+    if options == "Countries":
+        st.sidebar.subheader("Country options")
+        country = st.sidebar.selectbox("Choose country", unique_countries)
+        country_data, first_case, last_update = get_country_data(time_source, country)
+        st.sidebar.markdown(
+            "By default, start date is set to date of first registered case."
         )
-        .properties(title="Total number of confirmed cases and deaths (log-scale)")
-        .interactive()
-    )
 
-    st.subheader("Cumulative statistics")
-    st.write(cumulative_chart)
-    st.write(log_chart)
-
-    cases_chart = (
-        alt.Chart(interval_data, height=300, width=600)
-        .mark_bar()
-        .encode(x=alt.X("date:T", title="Date"), y=alt.Y("cases:Q", title="Cases"),)
-        .properties(title="Number of new cases per day")
-    )
-
-    deaths_chart = (
-        alt.Chart(interval_data, height=300, width=600)
-        .mark_bar()
-        .encode(
-            x=alt.X("date:T", title="Date"),
-            y=alt.Y("deaths:Q", title="Deaths"),
-            color=alt.value("orange"),
+        start = st.sidebar.date_input("Start date", first_case)
+        end = st.sidebar.date_input("End date", last_update)
+        date_mask = (country_data["date"].dt.date >= start) & (
+            country_data["date"].dt.date <= end
         )
-        .properties(title="Number of deaths per day")
-    )
+        interval_data = country_data[date_mask]
 
-    interval_data["relative_change_cases"] = relative_change(
-        interval_data, "cumulative_cases"
-    ).fillna(0)
+        st.title(country)
+        # TODO: Add map here?
+        # TODO: With optional checkbox for comparison with world?
 
-    interval_data["relative_change_deaths"] = relative_change(
-        interval_data, "cumulative_deaths"
-    ).fillna(0)
-
-    rate_of_change_cases = (
-        alt.Chart(interval_data, height=300, width=600)
-        .mark_line()
-        .encode(
-            x=alt.X("date:T", title="Date"),
-            y=alt.Y("relative_change_cases:Q", title="Change in %"),
+        country_summary = (
+            world_source[world_source["country_region"] == country]
+            .remove_columns(["lat", "lon"])
+            .set_index("country_region")
         )
-        .properties(title="Relative change in number of cases compared previous day")
-    )
+        st.write(country_summary)
 
-    rate_of_change_deaths = (
-        alt.Chart(interval_data, height=300, width=600)
-        .mark_line()
-        .encode(
-            x=alt.X("date:T", title="Date"),
-            y=alt.Y("relative_change_deaths:Q", title="Change in %"),
-            color=alt.value("orange"),
+        display = st.checkbox("Show data")
+        if display:
+            st.dataframe(interval_data)
+
+        # TODO: Stacked area not correct here. Need to figure out proportions.
+        line_chart = (
+            alt.Chart(interval_data)
+            .mark_line()
+            .encode(
+                x=alt.X("date:T", title="Date"),
+                y=alt.Y("confirmed:Q", title="Confirmed"),
+            )
+            .properties(height=300, width=600)
         )
-        .properties(title="Relative change in number of deaths compared previous day")
-    )
-
-    # TODO: Compare to rest of world
-
-    st.subheader("Daily summaries")
-    st.write(cases_chart)
-    st.write(deaths_chart)
-    st.write(rate_of_change_cases)
-    st.write(rate_of_change_deaths)
+        st.altair_chart(line_chart)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,12 @@
 # Install required packages
 -c requirements.txt
 
+# Linting
+flake8
+black
+mypy
+isort
+pandas-vet
+
 # Testing
 pytest
