@@ -1,33 +1,50 @@
+from collections import OrderedDict
+
 import altair as alt
 import pandas as pd
 from vega_datasets import data
 
 from src.data import get_most_affected
 
+MAPPINGS = [
+    ("sick_pr_100k", "Cases pr. 100.000"),
+    ("deaths_pr_100k", "Deaths pr. 100.000"),
+    ("confirmed", "Confirmed cases"),
+    ("recovered", "Recovered patients"),
+]
+COLUMN_TO_TITLE = OrderedDict(MAPPINGS)
+TITLE_TO_COLUMN = OrderedDict((title, col) for col, title in COLUMN_TO_TITLE.items())
 
-def create_map_plot(world_source):
+
+def create_map_plot(world_source, column, country=None):
+
+    if country:
+        world_source = world_source.loc[world_source["country_region"] == country]
+
     source = alt.topo_feature(data.world_110m.url, "countries")
-    background = alt.Chart(source).mark_geoshape(fill="white")
+    background = alt.Chart(source).mark_geoshape()
 
     foreground = (
         alt.Chart(source)
         .mark_geoshape(stroke="black", strokeWidth=0.15)
         .encode(
             color=alt.Color(
-                "sick_per_100k:N", scale=alt.Scale(scheme="lightgreyred"), legend=None,
+                f"{column}:N", scale=alt.Scale(scheme="lightgreyred"), legend=None,
             ),
-            tooltip=[
-                alt.Tooltip("country_region:N", title="Country"),
-                alt.Tooltip("sick_per_100k:Q", title="Cases pr. 100k"),
-            ],
         )
         .transform_lookup(
             lookup="id",
-            from_=alt.LookupData(
-                world_source, "id", ["sick_per_100k", "country_region"]
-            ),
+            from_=alt.LookupData(world_source, "id", [f"{column}", "country_region"]),
         )
     )
+
+    if not country:
+        foreground = foreground.encode(
+            tooltip=[
+                alt.Tooltip("country_region:N", title="Country"),
+                alt.Tooltip(f"{column}:Q", title=COLUMN_TO_TITLE[column]),
+            ],
+        )
 
     final_map = (
         (background + foreground)
