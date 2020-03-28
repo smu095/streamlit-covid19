@@ -13,6 +13,8 @@ from src.data import (
     get_country_data,
 )
 from src.plots import (
+    COLUMN_TO_TITLE,
+    TITLE_TO_COLUMN,
     create_heatmap,
     create_map_plot,
     create_top_n_barplot,
@@ -66,7 +68,11 @@ def main():
             st.header("World")
 
             # Map plot
-            world_map = create_map_plot(world_source)
+            choice = st.selectbox(
+                "Choose data to display", list(TITLE_TO_COLUMN.keys())
+            )
+            column = TITLE_TO_COLUMN[choice]
+            world_map = create_map_plot(world_source, column=column)
             st.altair_chart(world_map)
 
             # World summary
@@ -101,6 +107,7 @@ def main():
         st.sidebar.subheader("Country options")
         country = st.sidebar.selectbox("Choose country", unique_countries)
         country_data, first_case, last_update = get_country_data(time_source, country)
+
         st.sidebar.markdown(
             "By default, start date is set to date of first registered case."
         )
@@ -113,15 +120,16 @@ def main():
         interval_data = country_data[date_mask]
 
         st.title(country)
-        # TODO: Add map here?
-        # TODO: With optional checkbox for comparison with world?
-
         country_summary = (
             world_source[world_source["country_region"] == country]
-            .remove_columns(["lat", "lon"])
+            .remove_columns(["lat", "lon", "id"])
             .set_index("country_region")
         )
         st.write(country_summary)
+
+        country_map = create_map_plot(world_source, column="confirmed", country=country)
+        st.altair_chart(country_map)
+        # TODO: With optional checkbox for comparison with world?
 
         display = st.checkbox("Show data")
         if display:

@@ -107,6 +107,7 @@ def _get_worldwide_cases(url: str = CASES_WORLDWIDE):
     pop_join["sick_pr_100k"] = (
         pop_join["confirmed"] / pop_join["population"]
     ) * 10 ** 5
+    pop_join["deaths_pr_100k"] = (pop_join["deaths"] / pop_join["population"]) * 10 ** 5
 
     return pop_join
 
