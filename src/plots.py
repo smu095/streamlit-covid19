@@ -11,6 +11,7 @@ MAPPINGS = [
     ("sick_pr_100k", "Cases pr. 100.000"),
     ("deaths_pr_100k", "Deaths pr. 100.000"),
     ("confirmed", "Confirmed cases"),
+    ("delta_confirmed", "Delta confirmed cases"),
     ("recovered", "Recovered patients"),
 ]
 COLUMN_TO_TITLE = OrderedDict(MAPPINGS)
@@ -33,7 +34,7 @@ def create_map_plot(
 
     Returns
     -------
-    alt.Chart
+    final_map : alt.Chart
     """
 
     if country:
@@ -56,7 +57,7 @@ def create_map_plot(
         )
     )
 
-    if not country:
+    if country is None:
         foreground = foreground.encode(
             tooltip=[
                 alt.Tooltip("country_region:N", title="Country"),
@@ -85,7 +86,7 @@ def create_world_barplot(world_source: pd.DataFrame) -> alt.Chart:
 
     Returns
     -------
-    alt.Chart
+    bar_world : alt.Chart
     """
     world_summary = (
         world_source[["confirmed", "active", "deaths", "recovered"]]
@@ -97,12 +98,11 @@ def create_world_barplot(world_source: pd.DataFrame) -> alt.Chart:
         alt.Chart(world_summary)
         .mark_bar()
         .encode(
-            y=alt.Y("status:N", title="", sort="-x"),
             x=alt.X("count:Q", title="Count"),
+            y=alt.Y("status:N", title="", sort="-x"),
             color=alt.Color("status:N"),
             tooltip=["count:Q"],
         )
-        .interactive()
         .properties(title="Summary statistics", width=600, height=200)
         .configure_legend(orient="top")
     )
@@ -118,7 +118,7 @@ def create_top_n_barplot(world_source: pd.DataFrame) -> alt.Chart:
 
     Returns
     -------
-    alt.Chart
+    top_n_bar : alt.Chart
     """
     most_affected = get_most_affected(world_source, n=10)
     top_n_bar = (
@@ -134,14 +134,13 @@ def create_top_n_barplot(world_source: pd.DataFrame) -> alt.Chart:
                 alt.Tooltip("status:N", title="Status"),
             ],
         )
-        .interactive()
         .properties(title="10 most affected nations", width=600, height=300)
         .configure_legend(orient="top")
     )
     return top_n_bar
 
 
-def create_world_lineplot(time_source: pd.DataFrame) -> alt.Chart:
+def create_lineplot(time_source: pd.DataFrame, log: bool) -> alt.Chart:
     """Return animated alt.Chart lineplot of confirmed cases by date.
 
     Parameters
@@ -150,8 +149,9 @@ def create_world_lineplot(time_source: pd.DataFrame) -> alt.Chart:
 
     Returns
     -------
-    alt.Chart
+    time_chart : alt.Chart
     """
+    confirmed = "log_confirmed" if log else "confirmed"
     highlight = alt.selection(
         type="single", on="mouseover", fields=["country_region"], nearest=True
     )
@@ -160,7 +160,7 @@ def create_world_lineplot(time_source: pd.DataFrame) -> alt.Chart:
         .mark_line()
         .encode(
             x=alt.X("date:T", title="Date"),
-            y=alt.Y("confirmed:Q", title="Confirmed cases"),
+            y=alt.Y(f"{confirmed}:Q", title="Confirmed cases"),
             color=alt.Color("country_region:N", legend=None),
         )
     )
@@ -170,7 +170,7 @@ def create_world_lineplot(time_source: pd.DataFrame) -> alt.Chart:
             opacity=alt.value(0),
             tooltip=[
                 alt.Tooltip("country_region:N", title="Country"),
-                alt.Tooltip("confirmed:N", title="Confirmed cases"),
+                alt.Tooltip(f"{confirmed}:N", title="Confirmed cases"),
             ],
         )
         .add_selection(highlight)
@@ -203,7 +203,7 @@ def create_heatmap(
 
     Returns
     -------
-    alt.Chart
+    heatmap : alt.Chart
     """
     heatmap = (
         alt.Chart(selection)
@@ -222,3 +222,42 @@ def create_heatmap(
         .properties(title="Proportion of confirmed cases", width=800)
     )
     return heatmap
+
+
+def create_country_barplot(
+    interval_data: pd.DataFrame,
+    y: str,
+    x_label: str,
+    y_label: str,
+    colour: bool = False,
+) -> alt.Chart:
+    """Return alt.Chart barplot of column given by `y`.
+
+    Parameters
+    ----------
+    interval_data : pd.DataFrame
+    y : str
+        Column to plot.
+    x_label : str
+        Label for x-axis.
+    y_label : str
+        Label for y-axis.
+    colour : bool, optional
+        Make barplot orange, by default False (resulting in blue barplot)
+
+    Returns
+    -------
+    barplot : alt.Chart
+    """
+    base = (
+        alt.Chart(interval_data)
+        .mark_bar()
+        .encode(x=alt.X("date:T", title=x_label), y=alt.Y(f"{y}:Q", title=y_label))
+    )
+
+    if colour:
+        base = base.encode(color=alt.value("#ef8e3b"))
+
+    barplot = base.properties(height=150, width=600)
+
+    return barplot

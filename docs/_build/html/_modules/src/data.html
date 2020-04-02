@@ -146,7 +146,7 @@
            <div itemprop="articleBody">
             
   <h1>Source code for src.data</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">janitor</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -156,6 +156,7 @@
 <span class="n">CASES_WORLDWIDE</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv&quot;</span>  <span class="c1"># noqa: E501</span>
 <span class="n">TIME_SERIES</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv&quot;</span>  <span class="c1"># noqa: 501</span>
 
+<span class="c1"># NOTE: Manually add extra dot when compiling docs. Temporary solution.</span>
 <span class="n">POP_DATA</span> <span class="o">=</span> <span class="s2">&quot;../data/worldbank-population-2018.csv&quot;</span>
 <span class="n">ISO_DATA</span> <span class="o">=</span> <span class="s2">&quot;../data/iso-codes.csv&quot;</span>
 
@@ -222,7 +223,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    melted : pd.DataFrame</span>
-<span class="sd">        DataFrame of top n most affected countries.</span>
+<span class="sd">        DataFrame of top `n` most affected countries.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">most_affected</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">world_source</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;confirmed&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -312,7 +313,23 @@
         <span class="o">.</span><span class="n">remove_columns</span><span class="p">([</span><span class="s2">&quot;recovered&quot;</span><span class="p">,</span> <span class="s2">&quot;active&quot;</span><span class="p">,</span> <span class="s2">&quot;delta_recovered&quot;</span><span class="p">])</span>
     <span class="p">)</span>
 
+    <span class="c1"># Adding columns: delta_deaths, log_confirmed, log_delta_confirmed, days</span>
+    <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;delta_deaths&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;country_region&quot;</span><span class="p">)[</span><span class="s2">&quot;deaths&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;log_confirmed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;confirmed&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;confirmed&quot;</span><span class="p">]),</span> <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;confirmed&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;log_delta_confirmed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;delta_confirmed&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;delta_confirmed&quot;</span><span class="p">]),</span>
+        <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;delta_confirmed&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Merging population data</span>
     <span class="n">pop_join</span> <span class="o">=</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">WORLD_POP</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;country_region&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Adding columns: sick_pr_100k, std_confirmed (std. dev.), norm_confirmed (normalised)</span>
     <span class="n">pop_join</span><span class="p">[</span><span class="s2">&quot;sick_pr_100k&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">pop_join</span><span class="p">[</span><span class="s2">&quot;confirmed&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">pop_join</span><span class="p">[</span><span class="s2">&quot;population&quot;</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">5</span>
@@ -322,9 +339,68 @@
     <span class="n">pop_join</span><span class="p">[</span><span class="s2">&quot;norm_confirmed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pop_join</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;country_region&quot;</span><span class="p">)[</span><span class="s2">&quot;confirmed&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
     <span class="p">)</span>
+
     <span class="n">unique_countries</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pop_join</span><span class="p">[</span><span class="s2">&quot;country_region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
 
     <span class="k">return</span> <span class="n">pop_join</span><span class="p">,</span> <span class="n">unique_countries</span></div>
+
+
+<div class="viewcode-block" id="get_delta_confirmed"><a class="viewcode-back" href="../../api.html#src.data.get_delta_confirmed">[docs]</a><span class="k">def</span> <span class="nf">get_delta_confirmed</span><span class="p">(</span><span class="n">time_source</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return DataFrame of most recent delta confirmed (i.e. change in number) of</span>
+<span class="sd">    confirmed cases compared to previous day.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    time_source : pd.DataFrame</span>
+<span class="sd">        DataFrame returned from `_get_time_series_cases()`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    delta_confirmed : pd.DateFrame</span>
+<span class="sd">        DataFrame of most recent delta confirmed by country.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delta_confirmed</span> <span class="o">=</span> <span class="n">time_source</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+        <span class="n">time_source</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;country_region&quot;</span><span class="p">)[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">idxmax</span><span class="p">(),</span>
+        <span class="p">[</span><span class="s2">&quot;country_region&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;delta_confirmed&quot;</span><span class="p">],</span>
+    <span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">delta_confirmed</span></div>
+
+
+<div class="viewcode-block" id="get_country_summary"><a class="viewcode-back" href="../../api.html#src.data.get_country_summary">[docs]</a><span class="k">def</span> <span class="nf">get_country_summary</span><span class="p">(</span><span class="n">world_source</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">country</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return DataFrame with summary statistics for a given country.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    world_source : pd.DataFrame</span>
+<span class="sd">        DataFrame returned from `_get_worldwide_cases()`.</span>
+<span class="sd">    country : str</span>
+<span class="sd">        Country to summarise.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    country_summary : pd.DataFrame</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">country_summary</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">world_source</span><span class="p">[</span><span class="n">world_source</span><span class="p">[</span><span class="s2">&quot;country_region&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">country</span><span class="p">]</span>
+        <span class="o">.</span><span class="n">remove_columns</span><span class="p">([</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">])</span>
+        <span class="o">.</span><span class="n">select_columns</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="s2">&quot;country_region&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;population&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;confirmed&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;delta_confirmed&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;deaths&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;recovered&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;active&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;sick_pr_100k&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;delta_pr_100k&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;deaths_pr_100k&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;country_region&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">country_summary</span></div>
 </pre></div>
 
            </div>

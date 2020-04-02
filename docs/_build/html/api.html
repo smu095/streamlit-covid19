@@ -211,6 +211,44 @@ recovered, etc. for a given country.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="src.data.get_country_summary">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">get_country_summary</code><span class="sig-paren">(</span><em class="sig-param">world_source: pandas.core.frame.DataFrame</em>, <em class="sig-param">country: str</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#get_country_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data.get_country_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame with summary statistics for a given country.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>world_source</strong> (<em>pd.DataFrame</em>) – DataFrame returned from <cite>_get_worldwide_cases()</cite>.</p></li>
+<li><p><strong>country</strong> (<em>str</em>) – Country to summarise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>country_summary</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data.get_delta_confirmed">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">get_delta_confirmed</code><span class="sig-paren">(</span><em class="sig-param">time_source: pandas.core.frame.DataFrame</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#get_delta_confirmed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data.get_delta_confirmed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame of most recent delta confirmed (i.e. change in number) of
+confirmed cases compared to previous day.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>time_source</strong> (<em>pd.DataFrame</em>) – DataFrame returned from <cite>_get_time_series_cases()</cite>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>delta_confirmed</strong> – DataFrame of most recent delta confirmed by country.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.DateFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="src.data.get_most_affected">
 <code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">get_most_affected</code><span class="sig-paren">(</span><em class="sig-param">world_source: pandas.core.frame.DataFrame</em>, <em class="sig-param">n: int = 10</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#get_most_affected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data.get_most_affected" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return DataFrame of top n most affected countries (as measued by number
@@ -224,7 +262,7 @@ of confirmed cases).</p>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>melted</strong> – DataFrame of top n most affected countries.</p>
+<dd class="field-even"><p><strong>melted</strong> – DataFrame of top <cite>n</cite> most affected countries.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pd.DataFrame</p>
@@ -235,6 +273,29 @@ of confirmed cases).</p>
 </div>
 <div class="section" id="module-src.plots">
 <span id="plots"></span><h1>Plots<a class="headerlink" href="#module-src.plots" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="src.plots.create_country_barplot">
+<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_country_barplot</code><span class="sig-paren">(</span><em class="sig-param">interval_data: pandas.core.frame.DataFrame</em>, <em class="sig-param">y: str</em>, <em class="sig-param">x_label: str</em>, <em class="sig-param">y_label: str</em>, <em class="sig-param">colour: bool = False</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_country_barplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_country_barplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return alt.Chart barplot of column given by <cite>y</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>interval_data</strong> (<em>pd.DataFrame</em>) – </p></li>
+<li><p><strong>y</strong> (<em>str</em>) – Column to plot.</p></li>
+<li><p><strong>x_label</strong> (<em>str</em>) – Label for x-axis.</p></li>
+<li><p><strong>y_label</strong> (<em>str</em>) – Label for y-axis.</p></li>
+<li><p><strong>colour</strong> (<em>bool</em><em>, </em><em>optional</em>) – Make barplot orange, by default False (resulting in blue barplot)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>barplot</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>alt.Chart</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="function">
 <dt id="src.plots.create_heatmap">
 <code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_heatmap</code><span class="sig-paren">(</span><em class="sig-param">selection: pandas.core.frame.DataFrame</em>, <em class="sig-param">column: str = 'norm_confirmed'</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_heatmap" title="Permalink to this definition">¶</a></dt>
@@ -249,7 +310,24 @@ of confirmed cases relative to confirmed cases in most recent update.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>heatmap</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>alt.Chart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.plots.create_lineplot">
+<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_lineplot</code><span class="sig-paren">(</span><em class="sig-param">time_source: pandas.core.frame.DataFrame</em>, <em class="sig-param">log: bool</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_lineplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_lineplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return animated alt.Chart lineplot of confirmed cases by date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>time_source</strong> (<em>pd.DataFrame</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>time_chart</strong></p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>alt.Chart</p>
@@ -271,7 +349,7 @@ with only the given country coloured. By default None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>final_map</strong></p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>alt.Chart</p>
@@ -288,7 +366,7 @@ with only the given country coloured. By default None.</p></li>
 <dd class="field-odd"><p><strong>world_source</strong> (<em>pd.DataFrame</em>) – </p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>top_n_bar</strong></p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>alt.Chart</p>
@@ -306,24 +384,7 @@ cases, recovered patients, deaths and active cases.</p>
 <dd class="field-odd"><p><strong>world_source</strong> (<em>pd.DataFrame</em>) – </p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>alt.Chart</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="src.plots.create_world_lineplot">
-<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_world_lineplot</code><span class="sig-paren">(</span><em class="sig-param">time_source: pandas.core.frame.DataFrame</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_world_lineplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_world_lineplot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return animated alt.Chart lineplot of confirmed cases by date.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>time_source</strong> (<em>pd.DataFrame</em>) – </p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>bar_world</strong></p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>alt.Chart</p>
