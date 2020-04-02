@@ -159,6 +159,7 @@
     <span class="p">(</span><span class="s2">&quot;sick_pr_100k&quot;</span><span class="p">,</span> <span class="s2">&quot;Cases pr. 100.000&quot;</span><span class="p">),</span>
     <span class="p">(</span><span class="s2">&quot;deaths_pr_100k&quot;</span><span class="p">,</span> <span class="s2">&quot;Deaths pr. 100.000&quot;</span><span class="p">),</span>
     <span class="p">(</span><span class="s2">&quot;confirmed&quot;</span><span class="p">,</span> <span class="s2">&quot;Confirmed cases&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;delta_confirmed&quot;</span><span class="p">,</span> <span class="s2">&quot;Delta confirmed cases&quot;</span><span class="p">),</span>
     <span class="p">(</span><span class="s2">&quot;recovered&quot;</span><span class="p">,</span> <span class="s2">&quot;Recovered patients&quot;</span><span class="p">),</span>
 <span class="p">]</span>
 <span class="n">COLUMN_TO_TITLE</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">MAPPINGS</span><span class="p">)</span>
@@ -181,7 +182,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    alt.Chart</span>
+<span class="sd">    final_map : alt.Chart</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">country</span><span class="p">:</span>
@@ -204,7 +205,7 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">country</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">country</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">foreground</span> <span class="o">=</span> <span class="n">foreground</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
             <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;country_region:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Country&quot;</span><span class="p">),</span>
@@ -233,7 +234,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    alt.Chart</span>
+<span class="sd">    bar_world : alt.Chart</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">world_summary</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">world_source</span><span class="p">[[</span><span class="s2">&quot;confirmed&quot;</span><span class="p">,</span> <span class="s2">&quot;active&quot;</span><span class="p">,</span> <span class="s2">&quot;deaths&quot;</span><span class="p">,</span> <span class="s2">&quot;recovered&quot;</span><span class="p">]]</span>
@@ -245,12 +246,11 @@
         <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">world_summary</span><span class="p">)</span>
         <span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;status:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;-x&quot;</span><span class="p">),</span>
             <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">&quot;count:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Count&quot;</span><span class="p">),</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;status:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;-x&quot;</span><span class="p">),</span>
             <span class="n">color</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;status:N&quot;</span><span class="p">),</span>
             <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;count:Q&quot;</span><span class="p">],</span>
         <span class="p">)</span>
-        <span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
         <span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Summary statistics&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
         <span class="o">.</span><span class="n">configure_legend</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
     <span class="p">)</span>
@@ -266,7 +266,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    alt.Chart</span>
+<span class="sd">    top_n_bar : alt.Chart</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">most_affected</span> <span class="o">=</span> <span class="n">get_most_affected</span><span class="p">(</span><span class="n">world_source</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
     <span class="n">top_n_bar</span> <span class="o">=</span> <span class="p">(</span>
@@ -282,14 +282,13 @@
                 <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;status:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Status&quot;</span><span class="p">),</span>
             <span class="p">],</span>
         <span class="p">)</span>
-        <span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
         <span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;10 most affected nations&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
         <span class="o">.</span><span class="n">configure_legend</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">top_n_bar</span></div>
 
 
-<div class="viewcode-block" id="create_world_lineplot"><a class="viewcode-back" href="../../api.html#src.plots.create_world_lineplot">[docs]</a><span class="k">def</span> <span class="nf">create_world_lineplot</span><span class="p">(</span><span class="n">time_source</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">:</span>
+<div class="viewcode-block" id="create_lineplot"><a class="viewcode-back" href="../../api.html#src.plots.create_lineplot">[docs]</a><span class="k">def</span> <span class="nf">create_lineplot</span><span class="p">(</span><span class="n">time_source</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Return animated alt.Chart lineplot of confirmed cases by date.</span>
 
 <span class="sd">    Parameters</span>
@@ -298,8 +297,9 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    alt.Chart</span>
+<span class="sd">    time_chart : alt.Chart</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">confirmed</span> <span class="o">=</span> <span class="s2">&quot;log_confirmed&quot;</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="s2">&quot;confirmed&quot;</span>
     <span class="n">highlight</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">selection</span><span class="p">(</span>
         <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;single&quot;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;mouseover&quot;</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;country_region&quot;</span><span class="p">],</span> <span class="n">nearest</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
@@ -308,7 +308,7 @@
         <span class="o">.</span><span class="n">mark_line</span><span class="p">()</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
             <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">&quot;date:T&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">),</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;confirmed:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Confirmed cases&quot;</span><span class="p">),</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">confirmed</span><span class="si">}</span><span class="s2">:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Confirmed cases&quot;</span><span class="p">),</span>
             <span class="n">color</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;country_region:N&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="p">)</span>
@@ -318,7 +318,7 @@
             <span class="n">opacity</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
             <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;country_region:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Country&quot;</span><span class="p">),</span>
-                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;confirmed:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Confirmed cases&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">confirmed</span><span class="si">}</span><span class="s2">:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Confirmed cases&quot;</span><span class="p">),</span>
             <span class="p">],</span>
         <span class="p">)</span>
         <span class="o">.</span><span class="n">add_selection</span><span class="p">(</span><span class="n">highlight</span><span class="p">)</span>
@@ -351,7 +351,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    alt.Chart</span>
+<span class="sd">    heatmap : alt.Chart</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">heatmap</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">selection</span><span class="p">)</span>
@@ -370,6 +370,45 @@
         <span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Proportion of confirmed cases&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">heatmap</span></div>
+
+
+<div class="viewcode-block" id="create_country_barplot"><a class="viewcode-back" href="../../api.html#src.plots.create_country_barplot">[docs]</a><span class="k">def</span> <span class="nf">create_country_barplot</span><span class="p">(</span>
+    <span class="n">interval_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">y_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">colour</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return alt.Chart barplot of column given by `y`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    interval_data : pd.DataFrame</span>
+<span class="sd">    y : str</span>
+<span class="sd">        Column to plot.</span>
+<span class="sd">    x_label : str</span>
+<span class="sd">        Label for x-axis.</span>
+<span class="sd">    y_label : str</span>
+<span class="sd">        Label for y-axis.</span>
+<span class="sd">    colour : bool, optional</span>
+<span class="sd">        Make barplot orange, by default False (resulting in blue barplot)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    barplot : alt.Chart</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">interval_data</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">&quot;date:T&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">x_label</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">y_label</span><span class="p">))</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">colour</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="s2">&quot;#ef8e3b&quot;</span><span class="p">))</span>
+
+    <span class="n">barplot</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">barplot</span></div>
 </pre></div>
 
            </div>

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import janitor
 import numpy as np
@@ -8,7 +8,7 @@ US_DATA = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/da
 CASES_WORLDWIDE = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv"  # noqa: E501
 TIME_SERIES = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv"  # noqa: 501
 
-# TODO: Fix relative paths, screwing with docs and app
+# NOTE: Manually add extra dot when compiling docs. Temporary solution.
 POP_DATA = "./data/worldbank-population-2018.csv"
 ISO_DATA = "./data/iso-codes.csv"
 
@@ -165,7 +165,23 @@ def _get_time_series_cases(url: str = TIME_SERIES) -> pd.DataFrame:
         .remove_columns(["recovered", "active", "delta_recovered"])
     )
 
+    # Adding columns: delta_deaths, log_confirmed, log_delta_confirmed, days
+    cleaned["delta_deaths"] = cleaned.groupby("country_region")["deaths"].transform(
+        lambda x: x.diff(1).fillna(0)
+    )
+    cleaned["log_confirmed"] = np.where(
+        cleaned["confirmed"] >= 1, np.log(cleaned["confirmed"]), cleaned["confirmed"]
+    )
+    cleaned["log_delta_confirmed"] = np.where(
+        cleaned["delta_confirmed"] >= 1,
+        np.log(cleaned["delta_confirmed"]),
+        cleaned["delta_confirmed"],
+    )
+
+    # Merging population data
     pop_join = cleaned.merge(WORLD_POP, how="left", on="country_region")
+
+    # Adding columns: sick_pr_100k, std_confirmed (std. dev.), norm_confirmed (normalised)
     pop_join["sick_pr_100k"] = (
         pop_join["confirmed"] / pop_join["population"]
     ) * 10 ** 5
@@ -175,6 +191,65 @@ def _get_time_series_cases(url: str = TIME_SERIES) -> pd.DataFrame:
     pop_join["norm_confirmed"] = pop_join.groupby("country_region")["confirmed"].apply(
         lambda x: x / x.max()
     )
+
     unique_countries = tuple(pop_join["country_region"].unique())
 
     return pop_join, unique_countries
+
+
+def get_delta_confirmed(time_source: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return DataFrame of most recent delta confirmed (i.e. change in number) of
+    confirmed cases compared to previous day.
+
+    Parameters
+    ----------
+    time_source : pd.DataFrame
+        DataFrame returned from `_get_time_series_cases()`.
+
+    Returns
+    -------
+    delta_confirmed : pd.DateFrame
+        DataFrame of most recent delta confirmed by country.
+    """
+    delta_confirmed = time_source.loc[
+        time_source.groupby("country_region")["date"].idxmax(),
+        ["country_region", "date", "delta_confirmed"],
+    ].reset_index(drop=True)
+    return delta_confirmed
+
+
+def get_country_summary(world_source: pd.DataFrame, country: str) -> pd.DataFrame:
+    """Return DataFrame with summary statistics for a given country.
+
+    Parameters
+    ----------
+    world_source : pd.DataFrame
+        DataFrame returned from `_get_worldwide_cases()`.
+    country : str
+        Country to summarise.
+
+    Returns
+    -------
+    country_summary : pd.DataFrame
+    """
+    country_summary = (
+        world_source[world_source["country_region"] == country]
+        .remove_columns(["lat", "lon", "id", "date"])
+        .select_columns(
+            [
+                "country_region",
+                "population",
+                "confirmed",
+                "delta_confirmed",
+                "deaths",
+                "recovered",
+                "active",
+                "sick_pr_100k",
+                "delta_pr_100k",
+                "deaths_pr_100k",
+            ]
+        )
+        .set_index("country_region")
+    )
+    return country_summary
