@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API Documentation &mdash; streamlit-covid19 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to streamlit-covid19’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> streamlit-covid19
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-src.data">Data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-src.plots">Plots</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">streamlit-covid19</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>API Documentation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="api-documentation">
+<span id="api"></span><h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="module-src.data">
+<span id="data-processing"></span><h1>Data processing<a class="headerlink" href="#module-src.data" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="src.data._get_iso_codes">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">_get_iso_codes</code><span class="sig-paren">(</span><em class="sig-param">path: str = '../data/iso-codes.csv'</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#_get_iso_codes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data._get_iso_codes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame of ISO 3166-1 country codes.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data._get_time_series_cases">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">_get_time_series_cases</code><span class="sig-paren">(</span><em class="sig-param">url: str = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv'</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#_get_time_series_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data._get_time_series_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return time-series data of worldwide infections.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data._get_us_cases">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">_get_us_cases</code><span class="sig-paren">(</span><em class="sig-param">url: str = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases.csv'</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#_get_us_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data._get_us_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame of US most recent cumulative infection data.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data._get_world_population">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">_get_world_population</code><span class="sig-paren">(</span><em class="sig-param">path: str = '../data/worldbank-population-2018.csv'</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#_get_world_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data._get_world_population" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame of world population.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data._get_worldwide_cases">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">_get_worldwide_cases</code><span class="sig-paren">(</span><em class="sig-param">url: str = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv'</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#_get_worldwide_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data._get_worldwide_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame of most recent worldwide cumulative infection data.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data._to_date">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">_to_date</code><span class="sig-paren">(</span><em class="sig-param">x: pandas.core.series.Series</em><span class="sig-paren">)</span> &#x2192; pandas.core.series.Series<a class="reference internal" href="_modules/src/data.html#_to_date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data._to_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return normalised DateTime series.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data.get_country_data">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">get_country_data</code><span class="sig-paren">(</span><em class="sig-param">time_source: pandas.core.frame.DataFrame</em>, <em class="sig-param">country: str</em><span class="sig-paren">)</span> &#x2192; Tuple<a class="reference internal" href="_modules/src/data.html#get_country_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data.get_country_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame of worldwide time-series statistics on confirmed cases, deaths,
+recovered, etc. for a given country.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_source</strong> (<em>pd.DataFrame</em>) – DataFrame resulting from <cite>_get_time_series_cases()</cite>.</p></li>
+<li><p><strong>country</strong> (<em>str</em>) – Country name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>time_data, first_case, last_update</strong> – Tuple consisting of <cite>time_data</cite> (DataFrame), first_case (Timestamp) and last_update (Timestamp)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.data.get_most_affected">
+<code class="sig-prename descclassname">src.data.</code><code class="sig-name descname">get_most_affected</code><span class="sig-paren">(</span><em class="sig-param">world_source: pandas.core.frame.DataFrame</em>, <em class="sig-param">n: int = 10</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/src/data.html#get_most_affected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.data.get_most_affected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame of top n most affected countries (as measued by number
+of confirmed cases).</p>
+<p>Note that the data is returned in tidy format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>world_source</strong> (<em>pd.DataFrame</em>) – DataFrame resulting from <cite>_get_worldwide_cases()</cite>.</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of countries to include, by default 10</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>melted</strong> – DataFrame of top n most affected countries.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-src.plots">
+<span id="plots"></span><h1>Plots<a class="headerlink" href="#module-src.plots" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="src.plots.create_heatmap">
+<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_heatmap</code><span class="sig-paren">(</span><em class="sig-param">selection: pandas.core.frame.DataFrame</em>, <em class="sig-param">column: str = 'norm_confirmed'</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_heatmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return alt.Chart heatmap displaying different transformations
+of confirmed cases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>selection</strong> (<em>pd.DataFrame</em>) – Countries to compare, passed by st.multiselect in <cite>app.py</cite>.</p></li>
+<li><p><strong>column</strong> (<em>str</em>) – Value to plot. Default is ‘norm_confirmed’, which is the proportion
+of confirmed cases relative to confirmed cases in most recent update.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>alt.Chart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.plots.create_map_plot">
+<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_map_plot</code><span class="sig-paren">(</span><em class="sig-param">world_source: pandas.core.frame.DataFrame</em>, <em class="sig-param">column: str</em>, <em class="sig-param">country: Union[str</em>, <em class="sig-param">NoneType] = None</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_map_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_map_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return alt.Chart map of world filled by value of <cite>column</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>world_source</strong> (<em>pd.DataFrame</em>) – </p></li>
+<li><p><strong>column</strong> (<em>str</em>) – Column value to fill country/countries by.</p></li>
+<li><p><strong>country</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – If passed a country name, <cite>create_map_plot</cite> will draw world plot
+with only the given country coloured. By default None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>alt.Chart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.plots.create_top_n_barplot">
+<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_top_n_barplot</code><span class="sig-paren">(</span><em class="sig-param">world_source: pandas.core.frame.DataFrame</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_top_n_barplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_top_n_barplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return alt.Chart stacked barplot of top <cite>n</cite> most affected countries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>world_source</strong> (<em>pd.DataFrame</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>alt.Chart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.plots.create_world_barplot">
+<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_world_barplot</code><span class="sig-paren">(</span><em class="sig-param">world_source: pandas.core.frame.DataFrame</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_world_barplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_world_barplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return alt.Chart barplot of summary statistics of confirmed
+cases, recovered patients, deaths and active cases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>world_source</strong> (<em>pd.DataFrame</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>alt.Chart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.plots.create_world_lineplot">
+<code class="sig-prename descclassname">src.plots.</code><code class="sig-name descname">create_world_lineplot</code><span class="sig-paren">(</span><em class="sig-param">time_source: pandas.core.frame.DataFrame</em><span class="sig-paren">)</span> &#x2192; altair.vegalite.v4.api.Chart<a class="reference internal" href="_modules/src/plots.html#create_world_lineplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plots.create_world_lineplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return animated alt.Chart lineplot of confirmed cases by date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>time_source</strong> (<em>pd.DataFrame</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>alt.Chart</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to streamlit-covid19’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Sean Meling Murray
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

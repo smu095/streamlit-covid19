@@ -24,7 +24,19 @@ from src.plots import (
 
 
 @st.cache
-def get_us_cases(url: Optional[str] = None):
+def get_us_cases(url: Optional[str] = None) -> pd.DataFrame:
+    """[summary]
+
+    Parameters
+    ----------
+    url : Optional[str], optional
+        [description], by default None
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
     if url:
         return _get_us_cases(url)
     else:
@@ -32,7 +44,19 @@ def get_us_cases(url: Optional[str] = None):
 
 
 @st.cache
-def get_worldwide_cases(url: Optional[str] = None):
+def get_worldwide_cases(url: Optional[str] = None) -> pd.DataFrame:
+    """[summary]
+
+    Parameters
+    ----------
+    url : Optional[str], optional
+        [description], by default None
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
     if url:
         return _get_worldwide_cases(url)
     else:
@@ -40,7 +64,19 @@ def get_worldwide_cases(url: Optional[str] = None):
 
 
 @st.cache
-def get_time_series_cases(url: Optional[str] = None):
+def get_time_series_cases(url: Optional[str] = None) -> pd.DataFrame:
+    """[summary]
+
+    Parameters
+    ----------
+    url : Optional[str], optional
+        [description], by default None
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
     if url:
         return _get_time_series_cases(url)
     else:

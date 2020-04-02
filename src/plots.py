@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import Optional
 
 import altair as alt
 import pandas as pd
@@ -16,7 +17,24 @@ COLUMN_TO_TITLE = OrderedDict(MAPPINGS)
 TITLE_TO_COLUMN = OrderedDict((title, col) for col, title in COLUMN_TO_TITLE.items())
 
 
-def create_map_plot(world_source, column, country=None):
+def create_map_plot(
+    world_source: pd.DataFrame, column: str, country: Optional[str] = None
+) -> alt.Chart:
+    """Return alt.Chart map of world filled by value of `column`.
+
+    Parameters
+    ----------
+    world_source : pd.DataFrame
+    column : str
+        Column value to fill country/countries by.
+    country : Optional[str], optional
+        If passed a country name, `create_map_plot` will draw world plot
+        with only the given country coloured. By default None.
+
+    Returns
+    -------
+    alt.Chart
+    """
 
     if country:
         world_source = world_source.loc[world_source["country_region"] == country]
@@ -56,7 +74,19 @@ def create_map_plot(world_source, column, country=None):
     return final_map
 
 
-def create_world_barplot(world_source):
+def create_world_barplot(world_source: pd.DataFrame) -> alt.Chart:
+    """
+    Return alt.Chart barplot of summary statistics of confirmed
+    cases, recovered patients, deaths and active cases.
+
+    Parameters
+    ----------
+    world_source : pd.DataFrame
+
+    Returns
+    -------
+    alt.Chart
+    """
     world_summary = (
         world_source[["confirmed", "active", "deaths", "recovered"]]
         .sum()
@@ -79,7 +109,17 @@ def create_world_barplot(world_source):
     return bar_world
 
 
-def create_top_n_barplot(world_source):
+def create_top_n_barplot(world_source: pd.DataFrame) -> alt.Chart:
+    """Return alt.Chart stacked barplot of top `n` most affected countries.
+
+    Parameters
+    ----------
+    world_source : pd.DataFrame
+
+    Returns
+    -------
+    alt.Chart
+    """
     most_affected = get_most_affected(world_source, n=10)
     top_n_bar = (
         alt.Chart(most_affected)
@@ -101,7 +141,17 @@ def create_top_n_barplot(world_source):
     return top_n_bar
 
 
-def create_world_lineplot(time_source):
+def create_world_lineplot(time_source: pd.DataFrame) -> alt.Chart:
+    """Return animated alt.Chart lineplot of confirmed cases by date.
+
+    Parameters
+    ----------
+    time_source : pd.DataFrame
+
+    Returns
+    -------
+    alt.Chart
+    """
     highlight = alt.selection(
         type="single", on="mouseover", fields=["country_region"], nearest=True
     )
@@ -136,7 +186,25 @@ def create_world_lineplot(time_source):
     return time_chart
 
 
-def create_heatmap(selection, column):
+def create_heatmap(
+    selection: pd.DataFrame, column: str = "norm_confirmed"
+) -> alt.Chart:
+    """
+    Return alt.Chart heatmap displaying different transformations
+    of confirmed cases.
+
+    Parameters
+    ----------
+    selection : pd.DataFrame
+        Countries to compare, passed by st.multiselect in `app.py`.
+    column : str
+        Value to plot. Default is 'norm_confirmed', which is the proportion
+        of confirmed cases relative to confirmed cases in most recent update.
+
+    Returns
+    -------
+    alt.Chart
+    """
     heatmap = (
         alt.Chart(selection)
         .mark_rect()
