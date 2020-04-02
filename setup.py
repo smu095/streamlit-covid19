@@ -5,10 +5,5 @@ setup(
     version="0.1", 
     packages=find_packages(),
     install_requires=[
-        'pandas',
-        'pyjanitor',
-        'streamlit',
-        'altair',
-        'vega_datasets',
     ]
 )
