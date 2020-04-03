@@ -185,12 +185,9 @@ def _get_time_series_cases(url: str = TIME_SERIES) -> pd.DataFrame:
     pop_join["sick_pr_100k"] = (
         pop_join["confirmed"] / pop_join["population"]
     ) * 10 ** 5
-    pop_join["std_confirmed"] = pop_join.groupby("country_region")["confirmed"].apply(
-        lambda x: (x - x.mean()) / x.std()
-    )
-    pop_join["norm_confirmed"] = pop_join.groupby("country_region")["confirmed"].apply(
-        lambda x: x / x.max()
-    )
+    pop_join["delta_pr_100k"] = (
+        pop_join["delta_confirmed"] / pop_join["population"]
+    ) * 10 ** 5
 
     unique_countries = tuple(pop_join["country_region"].unique())
 

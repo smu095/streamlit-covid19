@@ -36,7 +36,6 @@ def create_map_plot(
     -------
     final_map : alt.Chart
     """
-
     if country:
         world_source = world_source.loc[world_source["country_region"] == country]
 
@@ -140,7 +139,9 @@ def create_top_n_barplot(world_source: pd.DataFrame) -> alt.Chart:
     return top_n_bar
 
 
-def create_lineplot(time_source: pd.DataFrame, log: bool) -> alt.Chart:
+def create_lineplot(
+    time_source: pd.DataFrame, x_label: str = "Date", log: bool = False
+) -> alt.Chart:
     """Return animated alt.Chart lineplot of confirmed cases by date.
 
     Parameters
@@ -159,7 +160,7 @@ def create_lineplot(time_source: pd.DataFrame, log: bool) -> alt.Chart:
         alt.Chart(time_source)
         .mark_line()
         .encode(
-            x=alt.X("date:T", title="Date"),
+            x=alt.X("date:T", title=x_label),
             y=alt.Y(f"{confirmed}:Q", title="Confirmed cases"),
             color=alt.Color("country_region:N", legend=None),
         )
@@ -187,7 +188,14 @@ def create_lineplot(time_source: pd.DataFrame, log: bool) -> alt.Chart:
 
 
 def create_heatmap(
-    selection: pd.DataFrame, column: str = "norm_confirmed"
+    selection: pd.DataFrame,
+    column: str = "delta_confirmed",
+    title: str = None,
+    x_label: str = "",
+    x_orient: str = "top",
+    y_orient: str = "right",
+    width=600,
+    height=400,
 ) -> alt.Chart:
     """
     Return alt.Chart heatmap displaying different transformations
@@ -209,19 +217,21 @@ def create_heatmap(
         alt.Chart(selection)
         .mark_rect()
         .encode(
-            alt.X("monthdate(date):T", title="Date"),
-            alt.Y("country_region:N", title=""),
+            alt.X("monthdate(date):T", title=x_label, axis=alt.Axis(orient=x_orient)),
+            alt.Y("country_region:N", title="", axis=alt.Axis(orient=y_orient)),
             color=alt.Color(
-                f"{column}:Q", legend=None, scale=alt.Scale(scheme="yelloworangered"),
+                f"{column}:Q", legend=None, scale=alt.Scale(scheme="lightgreyred")
             ),
-            tooltip=[
-                alt.Tooltip("country_region:N", title="Country"),
-                alt.Tooltip(f"{column}:Q", title="Cases pr. 100k"),
-            ],
+            tooltip=[f"{column}:Q"],
         )
-        .properties(title="Proportion of confirmed cases", width=800)
     )
-    return heatmap
+
+    if title:
+        final = heatmap.properties(title=title, width=width, height=height,)
+    else:
+        final = heatmap.properties(width=width, height=height,)
+
+    return final
 
 
 def create_country_barplot(

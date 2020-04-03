@@ -99,6 +99,8 @@ def main():
     world_source = get_worldwide_cases()
     time_source, unique_countries = get_time_series_cases()
     delta_confirmed = get_delta_confirmed(time_source)
+    top_10 = world_source.sort_values(by="confirmed")["country_region"].tail(10)
+
     world_source = world_source.merge(delta_confirmed, on="country_region", how="left")
     world_source["delta_pr_100k"] = (
         world_source["delta_confirmed"] / world_source["population"]
@@ -129,7 +131,7 @@ def main():
 
             # World time-series
             log = st.checkbox("Log scale")
-            time_chart = create_lineplot(time_source, log)
+            time_chart = create_lineplot(time_source, log=log)
             st.altair_chart(time_chart)
 
             # World summary
@@ -142,18 +144,24 @@ def main():
 
         # World heatmap
         if view == "Infection heatmap":
-            random_countries = np.random.choice(unique_countries, size=20)
+            st.header("Rate of change at a glance")
+            st.markdown(
+                "The infection heatmap shows the daily change in confirmed cases per 100.000 (also called delta). The more red, the higher the delta. By default the heatmap displays the top 10 most affected countries. To add more countries, use the multiselect box."
+            )
             options = st.multiselect("Select countries to display", unique_countries)
+            top_10_countries = time_source[time_source["country_region"].isin(top_10)]
+            heatmap = create_heatmap(
+                top_10_countries,
+                column="delta_pr_100k",
+                width=800,
+                height=25
+                * (len(options) + top_10_countries["country_region"].nunique()),
+            )
+            heatmap_chart = st.altair_chart(heatmap)
 
             if len(options) > 0:
                 selection = time_source[time_source["country_region"].isin(options)]
-            else:
-                selection = time_source[
-                    time_source["country_region"].isin(random_countries)
-                ]
-
-            heatmap = create_heatmap(selection, "norm_confirmed")
-            st.altair_chart(heatmap)
+                heatmap_chart.add_rows(selection)
 
     # COUNTRIES -----------------------------------------------
     if options == "Countries":
@@ -195,8 +203,20 @@ def main():
         countries = st.multiselect(
             "Compare with:", list(time_source["country_region"].unique())
         )
+
         log = st.checkbox("Log scale")
-        country_line_chart = st.altair_chart(create_lineplot(interval_data, log=log))
+        country_time_series = create_lineplot(interval_data, x_label=None, log=log)
+        heatbar = create_heatmap(
+            interval_data,
+            column="delta_pr_100k",
+            title="",
+            width=600,
+            height=20 * (len(countries) + 1),
+            x_label="Daily change in confirmed cases per 100.000",
+            x_orient="bottom",
+        )
+        c = alt.vconcat(country_time_series, heatbar)
+        country_line_chart = st.altair_chart(c)
 
         if len(countries) > 0:
             for c in countries:
