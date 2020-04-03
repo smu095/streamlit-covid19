@@ -1,3 +1,4 @@
+import os
 from typing import List, Tuple, Union
 
 import janitor
@@ -8,9 +9,9 @@ US_DATA = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/da
 CASES_WORLDWIDE = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv"  # noqa: E501
 TIME_SERIES = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv"  # noqa: 501
 
-# NOTE: Manually add extra dot when compiling docs. Temporary solution.
-POP_DATA = "./data/worldbank-population-2018.csv"
-ISO_DATA = "./data/iso-codes.csv"
+PATH = os.path.abspath(os.path.dirname(__file__))
+POP_DATA = os.path.join(PATH, "../data/worldbank-population-2018.csv")
+ISO_DATA = os.path.join(PATH, "../data/iso-codes.csv")
 
 
 def _get_world_population(path: str = POP_DATA) -> pd.DataFrame:
