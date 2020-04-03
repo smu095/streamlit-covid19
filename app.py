@@ -11,6 +11,7 @@ from src.data import (
     _get_time_series_cases,
     _get_us_cases,
     _get_worldwide_cases,
+    create_country_text_intro,
     get_country_data,
     get_country_summary,
     get_delta_confirmed,
@@ -192,7 +193,8 @@ def main():
 
         # Show tabular summary
         country_summary = get_country_summary(world_source, country)
-        st.dataframe(country_summary)
+        country_intro = create_country_text_intro(country_summary)
+        st.markdown(country_intro)
 
         display = st.checkbox("Show data")
         if display:

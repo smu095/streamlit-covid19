@@ -12,6 +12,10 @@ TIME_SERIES = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-dat
 PATH = os.path.abspath(os.path.dirname(__file__))
 POP_DATA = os.path.join(PATH, "../data/worldbank-population-2018.csv")
 ISO_DATA = os.path.join(PATH, "../data/iso-codes.csv")
+TEMPLATE = os.path.join(PATH, "../data/country_text_template.txt")
+
+with open(TEMPLATE, "r") as file:
+    COUNTRY_TEMPLATE = file.read()
 
 
 def _get_world_population(path: str = POP_DATA) -> pd.DataFrame:
@@ -231,23 +235,44 @@ def get_country_summary(world_source: pd.DataFrame, country: str) -> pd.DataFram
     -------
     country_summary : pd.DataFrame
     """
-    country_summary = (
-        world_source[world_source["country_region"] == country]
-        .remove_columns(["lat", "lon", "id", "date"])
-        .select_columns(
-            [
-                "country_region",
-                "population",
-                "confirmed",
-                "delta_confirmed",
-                "deaths",
-                "recovered",
-                "active",
-                "sick_pr_100k",
-                "delta_pr_100k",
-                "deaths_pr_100k",
-            ]
-        )
-        .set_index("country_region")
+    country_summary = world_source[
+        world_source["country_region"] == country
+    ].select_columns(
+        [
+            "country_region",
+            "last_update",
+            "population",
+            "confirmed",
+            "deaths",
+            "sick_pr_100k",
+        ]
     )
     return country_summary
+
+
+def create_country_text_intro(world_source: pd.DataFrame):
+    # TODO: Write docstring
+    """[summary]
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    # fmt: off
+    print(COUNTRY_TEMPLATE)
+    text_intro = COUNTRY_TEMPLATE.format(
+        last_update=world_source["last_update"].dt.strftime("%A %B %d, %Y").values[0],
+        country_region=world_source["country_region"].values[0],
+        confirmed=world_source["confirmed"].values[0],
+        population=world_source["population"].values[0],
+        sick_pr_100k=world_source["sick_pr_100k"].values[0],
+        deaths=10,
+    )
+    # fmt: on
+    return text_intro

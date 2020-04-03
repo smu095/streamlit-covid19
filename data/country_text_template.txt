@@ -1,0 +1,1 @@
+As of **{last_update}**, {country_region} has **{confirmed:.0f} confirmed cases** in a population of {population:,.0f}. This means that {sick_pr_100k:.1f} people are confirmed sick per 100,000. So far, **{deaths:.0f} have died** as a result of the contracting covid-19.
