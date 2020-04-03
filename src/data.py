@@ -252,6 +252,7 @@ def get_country_summary(world_source: pd.DataFrame, country: str) -> pd.DataFram
 
 def create_country_text_intro(world_source: pd.DataFrame):
     # TODO: Write docstring
+    # TODO: See if there is a better way to format string
     """[summary]
 
     Parameters
@@ -272,7 +273,7 @@ def create_country_text_intro(world_source: pd.DataFrame):
         confirmed=world_source["confirmed"].values[0],
         population=world_source["population"].values[0],
         sick_pr_100k=world_source["sick_pr_100k"].values[0],
-        deaths=10,
+        deaths=world_source["deaths"].values[0],
     )
     # fmt: on
     return text_intro
