@@ -12,6 +12,7 @@ from src.data import (
     _get_us_cases,
     _get_worldwide_cases,
     create_country_text_intro,
+    create_world_text_intro,
     get_country_data,
     get_country_summary,
     get_delta_confirmed,
@@ -129,6 +130,8 @@ def main():
             column = TITLE_TO_COLUMN[choice]
             world_map = create_map_plot(world_source, column=column)
             st.altair_chart(world_map)
+            world_intro = create_world_text_intro(world_source)
+            st.markdown(world_intro)
 
             # World time-series
             log = st.checkbox("Log scale")

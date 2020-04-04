@@ -15,10 +15,13 @@ CASES_WORLDWIDE = os.path.join(PATH, "../data/cases_country.csv")
 TIME_SERIES = os.path.join(PATH, "../data/cases_time.csv")
 POP_DATA = os.path.join(PATH, "../data/worldbank-population-2018.csv")
 ISO_DATA = os.path.join(PATH, "../data/iso-codes.csv")
-TEMPLATE = os.path.join(PATH, "../data/country_text_template.txt")
 
-with open(TEMPLATE, "r") as file:
+COUNTRY_TEXT = os.path.join(PATH, "../data/country_text_template.txt")
+WORLD_TEXT = os.path.join(PATH, "../data/world_text_template.txt")
+with open(COUNTRY_TEXT, "r") as file:
     COUNTRY_TEMPLATE = file.read()
+with open(WORLD_TEXT, "r") as file:
+    WORLD_TEMPLATE = file.read()
 
 
 def _get_world_population(path: str = POP_DATA) -> pd.DataFrame:
@@ -253,19 +256,19 @@ def get_country_summary(world_source: pd.DataFrame, country: str) -> pd.DataFram
     return country_summary
 
 
-def create_country_text_intro(world_source: pd.DataFrame):
+def create_country_text_intro(world_source: pd.DataFrame) -> str:
     # TODO: Write docstring
     # TODO: See if there is a better way to format string
     """[summary]
 
     Parameters
     ----------
-    df : pd.DataFrame
+    world_source : pd.DataFrame
         [description]
 
     Returns
     -------
-    [type]
+    str
         [description]
     """
     text_intro = COUNTRY_TEMPLATE.format(
@@ -275,5 +278,40 @@ def create_country_text_intro(world_source: pd.DataFrame):
         population=world_source["population"].values[0],
         sick_pr_100k=world_source["sick_pr_100k"].values[0],
         deaths=world_source["deaths"].values[0],
+    )
+    return text_intro
+
+
+def create_world_text_intro(world_source) -> str:
+    """[summary]
+
+    Parameters
+    ----------
+    world_source : [type]
+        [description]
+
+    Returns
+    -------
+    str
+        [description]
+    """
+    summary = world_source[
+        ["last_update", "population", "confirmed", "deaths", "sick_pr_100k"]
+    ].agg(
+        {
+            "last_update": "unique",
+            "population": "sum",
+            "confirmed": "sum",
+            "deaths": "sum",
+            "sick_pr_100k": "sum",
+        }
+    )
+    text_intro = WORLD_TEMPLATE.format(
+        last_update=summary["last_update"].dt.strftime("%A %B %d, %Y").values[0],
+        confirmed=summary["confirmed"].values[0],
+        sick_pr_100k=(summary["confirmed"].values[0] / summary["population"].values[0])
+        * 10 ** 5,
+        deaths=summary["deaths"].values[0],
+        death_rate=(summary["deaths"].values[0] / summary["confirmed"].values[0]) * 100,
     )
     return text_intro
