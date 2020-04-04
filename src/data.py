@@ -5,11 +5,14 @@ import janitor
 import numpy as np
 import pandas as pd
 
-US_DATA = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases.csv"  # noqa: E501
-CASES_WORLDWIDE = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv"  # noqa: E501
-TIME_SERIES = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv"  # noqa: 501
+from src.scrape import check_for_new_data
+
+_ = check_for_new_data()
 
 PATH = os.path.abspath(os.path.dirname(__file__))
+US_DATA = os.path.join(PATH, "../data/cases.csv")
+CASES_WORLDWIDE = os.path.join(PATH, "../data/cases_country.csv")
+TIME_SERIES = os.path.join(PATH, "../data/cases_time.csv")
 POP_DATA = os.path.join(PATH, "../data/worldbank-population-2018.csv")
 ISO_DATA = os.path.join(PATH, "../data/iso-codes.csv")
 TEMPLATE = os.path.join(PATH, "../data/country_text_template.txt")
@@ -126,9 +129,9 @@ def get_country_data(time_source: pd.DataFrame, country: str) -> Tuple:
     return time_data, first_case, last_update
 
 
-def _get_us_cases(url: str = US_DATA) -> pd.DataFrame:
+def _get_us_cases(csv: str = US_DATA) -> pd.DataFrame:
     """Return DataFrame of US most recent cumulative infection data."""
-    cases = pd.read_csv(url)
+    cases = pd.read_csv(csv)
     cleaned = (
         cases.clean_names()
         .transform_column("last_update", _to_date)
@@ -137,9 +140,9 @@ def _get_us_cases(url: str = US_DATA) -> pd.DataFrame:
     return cleaned
 
 
-def _get_worldwide_cases(url: str = CASES_WORLDWIDE) -> pd.DataFrame:
+def _get_worldwide_cases(csv: str = CASES_WORLDWIDE) -> pd.DataFrame:
     """Return DataFrame of most recent worldwide cumulative infection data."""
-    cases = pd.read_csv(url)
+    cases = pd.read_csv(csv)
     cleaned = (
         cases.clean_names()
         .rename_column("long_", "lon")
@@ -160,9 +163,9 @@ def _get_worldwide_cases(url: str = CASES_WORLDWIDE) -> pd.DataFrame:
     return pop_join
 
 
-def _get_time_series_cases(url: str = TIME_SERIES) -> pd.DataFrame:
+def _get_time_series_cases(csv: str = TIME_SERIES) -> pd.DataFrame:
     """Return time-series data of worldwide infections."""
-    time_series = pd.read_csv(url)
+    time_series = pd.read_csv(csv)
     cleaned = (
         time_series.clean_names()
         .rename_column("last_update", "date")

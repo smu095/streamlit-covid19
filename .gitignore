@@ -6,3 +6,5 @@ notebooks/
 .venv/
 *.egg-info/
 __pycache__/
+data/last_commit.txt
+data/cases*.csv
