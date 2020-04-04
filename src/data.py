@@ -268,8 +268,6 @@ def create_country_text_intro(world_source: pd.DataFrame):
     [type]
         [description]
     """
-    # fmt: off
-    print(COUNTRY_TEMPLATE)
     text_intro = COUNTRY_TEMPLATE.format(
         last_update=world_source["last_update"].dt.strftime("%A %B %d, %Y").values[0],
         country_region=world_source["country_region"].values[0],
@@ -278,5 +276,4 @@ def create_country_text_intro(world_source: pd.DataFrame):
         sick_pr_100k=world_source["sick_pr_100k"].values[0],
         deaths=world_source["deaths"].values[0],
     )
-    # fmt: on
     return text_intro
