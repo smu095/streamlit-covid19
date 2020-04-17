@@ -1,4 +1,5 @@
 import pathlib
+import warnings
 from typing import List, Tuple
 
 import janitor
@@ -7,6 +8,8 @@ import pandas as pd
 import streamlit as st
 
 from src.scrape import check_for_new_data
+
+warnings.filterwarnings("ignore")
 
 _ = check_for_new_data()
 
