@@ -5,7 +5,7 @@ import altair as alt
 import pandas as pd
 from vega_datasets import data
 
-from src.data import get_most_affected
+from src.data import _get_trajectory_data, get_most_affected
 
 COLUMN_TO_TITLE = OrderedDict(
     [
@@ -336,3 +336,103 @@ def create_delta_barplots(interval_data: pd.DataFrame) -> alt.Chart:
     )
     delta_chart = alt.vconcat(delta_confirmed, delta_deaths)
     return delta_chart
+
+
+def create_animated_trajectory_plot(data, x_max, y_max):
+    # TODO: Write docstring
+    """[summary]
+    Parameters
+    ----------
+    data : [type]
+        [description]
+    x_max : [type]
+        [description]
+    y_max : [type]
+        [description]
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    anim = (
+        alt.Chart(data)
+        .mark_line(point=True)
+        .encode(
+            x=alt.X("log_confirmed:Q", scale=alt.Scale(domain=[0, x_max])),
+            y=alt.Y("log_delta_confirmed:Q", scale=alt.Scale(domain=[0, y_max])),
+            color=alt.Color("country_region:N", legend=None),
+        )
+        .properties(width=600, height=400)
+    )
+    return anim
+
+
+def initialise_animated_trajectory_plot(weekly_avg, countries, x_max, y_max):
+    # TODO: Write docstring
+    """[summary]
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    t0 = weekly_avg[weekly_avg["date"] <= weekly_avg["date"].min()]
+    chart = create_animated_trajectory_plot(t0, x_max, y_max)
+    return chart
+
+
+def create_trajectory_plot(time_source: pd.DataFrame):
+    # TODO: Write docstring
+    # TODO: Add circle to final point?
+    # TODO: Add text annotations?
+    """[summary]
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    time_source_top_10 = _get_trajectory_data(time_source)
+
+    nearest = alt.selection(
+        type="single", nearest=True, on="mouseover", fields=["country_region"],
+    )
+
+    base = (
+        alt.Chart(time_source_top_10)
+        .mark_line()
+        .encode(
+            x=alt.X(
+                "mean_confirmed:Q",
+                scale=alt.Scale(type="log"),
+                title="Avg. weekly increase in confirmed cases",
+            ),
+            y=alt.Y(
+                "mean_delta_confirmed:Q",
+                scale=alt.Scale(type="log"),
+                title="Avg. weekly confirmed cases",
+            ),
+            tooltip=["country_region"],
+            size=alt.condition(~nearest, alt.value(1), alt.value(3)),
+            color=alt.Color("country_region:N", legend=None),
+        )
+        .transform_filter((alt.datum.confirmed > 0) & (alt.datum.delta_confirmed > 0))
+        .transform_aggregate(
+            mean_confirmed="mean(confirmed)",
+            mean_delta_confirmed=("mean(delta_confirmed)"),
+            groupby=["country_region", "week"],
+        )
+    )
+
+    points = base.mark_circle().encode(opacity=alt.value(0)).add_selection(nearest)
+
+    chart = (
+        (base + points)
+        .interactive()
+        .properties(
+            width=600,
+            height=400,
+            title="Trajectory of infection in top 10 most affected countries",
+        )
+        .configure_axis(gridOpacity=0.3)
+    )
+
+    return chart

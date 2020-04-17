@@ -1,5 +1,5 @@
 import pathlib
-from typing import Tuple
+from typing import List, Tuple
 
 import janitor
 import numpy as np
@@ -191,7 +191,9 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
     us_cases = _get_us_cases(cleaned)
     world = cleaned.filter_on("country_region == 'US'", complement=True)
     time_series = pd.concat((world, us_cases), axis=0)
-    time_series = time_series.sort_values(by="country_region").reset_index(drop=True)
+    time_series = time_series.sort_values(by=["country_region", "date"]).reset_index(
+        drop=True
+    )
 
     # Adding columns: scaled_confirmed, delta_deaths, log_confirmed, log_delta_confirmed, mortality_rate, delta_pr_100k
     time_series["scaled_confirmed"] = time_series.groupby("country_region")[
@@ -300,3 +302,58 @@ def get_interval_data(
         country_data["date"].dt.date <= end
     )
     return country_data[date_mask]
+
+
+def get_weekly_avg(time_source: pd.DataFrame, countries: List[str]) -> pd.DataFrame:
+    """[summary]
+
+    Parameters
+    ----------
+    time_source : pd.DataFrame
+        [description]
+    countries : List[str]
+        [description]
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
+    # TODO: Write docstring
+    # TODO: Refactor to use original scale, but use scale="log" in alt.Chart?
+    weekly_avg = (
+        time_source[time_source["country_region"].isin(countries)]
+        .set_index("date")
+        .filter_on("country_region == 'Guyana'", complement=True)
+        .groupby("country_region")
+        .resample("W")
+        .agg({"log_confirmed": "max", "log_delta_confirmed": "mean"})
+        .reset_index()
+    )
+    return weekly_avg
+
+
+@st.cache(show_spinner=False)
+def _get_trajectory_data(time_source: pd.DataFrame) -> pd.DataFrame:
+    """[summary]
+
+    Parameters
+    ----------
+    time_source : pd.DataFrame
+        [description]
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
+    # TODO: Write docstring
+    top_10 = (
+        time_source[time_source["date"] == time_source["date"].max()]
+        .sort_values(by="confirmed")["country_region"]
+        .tail(10)
+    )
+    time_source_top_10 = time_source[time_source["country_region"].isin(top_10)]
+    time_source_top_10["week"] = time_source_top_10["date"].dt.week
+
+    return time_source_top_10
