@@ -4,7 +4,6 @@
 #
 #    pip-compile
 #
--e file:.#egg=covid19     # via -r requirements.in
 altair==4.1.0             # via -r requirements.in, streamlit
 appnope==0.1.0            # via ipykernel, ipython
 astor==0.8.1              # via streamlit

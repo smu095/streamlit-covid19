@@ -1,6 +1,9 @@
 # Install required packages
 -c requirements.txt
 
+# Install repo as package
+-e file:.#egg=covid19
+
 # Linting
 flake8
 black

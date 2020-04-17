@@ -1,6 +1,3 @@
-# Install repo as package
--e file:.#egg=covid19
-
 # Data science
 pandas
 pyjanitor

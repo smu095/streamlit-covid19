@@ -3,7 +3,7 @@ import pathlib
 import pandas as pd
 import streamlit as st
 
-PATH = pathlib.Path("data/")
+PATH = pathlib.Path("templates/")
 COUNTRY_TEXT = PATH.joinpath("country_text_template.md")
 WORLD_TEXT = PATH.joinpath("world_text_template.md")
 INFECTION_TEXT = PATH.joinpath("heatmap_text_template.md")

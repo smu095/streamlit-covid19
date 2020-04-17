@@ -9,9 +9,9 @@ DATA = {
     "cases_country.csv": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv",  # noqa: E501
     "cases_time.csv": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv",  # noqa: 501
 }
-PATH = pathlib.Path("data/")
-FNAME = PATH.joinpath("last_commit.txt")
 
+FNAME = pathlib.Path("data/last_commit.txt")
+FNAME.parent.mkdir(parents=True, exist_ok=True)
 
 def get_last_commit_hash():
     """Returns latest commit hash from John Hopkins data repo."""
@@ -31,19 +31,19 @@ def check_for_updates():
         print(e)
         return False
 
-    if not os.path.isfile(FNAME):
-        with open(FNAME, "w") as file:
-            file.write("")
+    if not FNAME.exists():
+        with FNAME.open("w") as f:
+            f.write("")
 
-    with open(FNAME, "r") as file:
-        commit = file.read()
+    with FNAME.open("r") as f:
+        commit = f.read()
 
     if commit == last_commit:
         print(f"Data from commit '{last_commit}' already downloaded.")
         return False
     else:
         print(f"New data available. Commit '{last_commit}' saved to last_commit.txt.")
-        with open(FNAME, "w") as write_file:
+        with FNAME.open("w") as write_file:
             write_file.write(last_commit)
         return True
 

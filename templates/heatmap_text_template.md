@@ -1,0 +1,1 @@
+The infection heatmap shows the daily change in confirmed cases per 100.000 (also called delta). The more red, the higher the delta. By default the heatmap displays the top 10 most affected countries. To add more countries, use the multiselect box.

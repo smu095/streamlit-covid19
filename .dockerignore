@@ -1,0 +1,20 @@
+# System stuff
+.git
+.DS_Store
+
+# Python stuff
+.ipynb_checkpoints
+.mypy_cache
+*.egg-info
+**/__pycache__
+
+# Project-specific stuff
+.deprecated
+notebooks
+docs
+data
+*.in
+.gitignore
+.venv
+.vscode
+
