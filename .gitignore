@@ -7,3 +7,4 @@ notebooks/
 *.egg-info/
 __pycache__/
 data
+!data/continent_mapping.csv
