@@ -13,6 +13,7 @@
 notebooks
 docs
 data
+!data/continent_mapping.csv
 *.in
 .gitignore
 .venv
