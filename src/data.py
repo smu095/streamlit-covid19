@@ -224,18 +224,19 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
 
 @st.cache(show_spinner=False)
 def get_world_source(delta_confirmed: pd.DataFrame) -> pd.DataFrame:
-    # TODO: Write docstring
-    """[summary]
+    """
+    Return DataFrame with global infection summary statistics, including a `delta_pr_100k`
+    based on most recent `delta_confirmed`.
 
     Parameters
     ----------
     delta_confirmed : pd.DataFrame
-        [description]
+        DataFrame of most recent statistics for delta_confirmed, from `get_delta_confirmed()`.
 
     Returns
     -------
-    pd.DataFrame
-        [description]
+    world_source : pd.DataFrame
+        DataFrame of global infection summary statistics.
     """
     worldwide = _get_worldwide_cases()
     world_source = worldwide.merge(
@@ -281,22 +282,21 @@ def get_country_summary(world_source: pd.DataFrame, country: str) -> pd.DataFram
 def get_interval_data(
     country_data: pd.DataFrame, start: pd.DatetimeIndex, end: pd.DatetimeIndex
 ) -> pd.DataFrame:
-    # TODO: Write docstring
-    """[summary]
+    """Return DataFrame of time series data in interval [`start`, `end`].
 
     Parameters
     ----------
     country_data : pd.DataFrame
-        [description]
+        Time series data for a given country.
     start : pd.DatetimeIndex
-        [description]
+        Start date of interval.
     end : pd.DatetimeIndex
-        [description]
+        End date of interval.
 
     Returns
     -------
     pd.DataFrame
-        [description]
+        Time series data for given interval.
     """
     date_mask = (country_data["date"].dt.date >= start) & (
         country_data["date"].dt.date <= end
@@ -305,21 +305,24 @@ def get_interval_data(
 
 
 def get_weekly_avg(time_source: pd.DataFrame, countries: List[str]) -> pd.DataFrame:
-    """[summary]
+    """
+    Return DataFrame of weekly averages of `log_confirmed` and `log_delta_confirmed` for a list
+    of given countries.
+
+    The output of this function is used to build trajectory plots.
 
     Parameters
     ----------
     time_source : pd.DataFrame
-        [description]
+        Time series data, resulting from `get_time_series_cases()`
     countries : List[str]
-        [description]
+        List of country names to include.
 
     Returns
     -------
-    pd.DataFrame
-        [description]
+    weekly_avg : pd.DataFrame
+        DataFrame of `log_confirmed` and `log_delta_confirmed` weekly averages for `countries`.
     """
-    # TODO: Write docstring
     # TODO: Refactor to use original scale, but use scale="log" in alt.Chart?
     weekly_avg = (
         time_source[time_source["country_region"].isin(countries)]
@@ -327,7 +330,7 @@ def get_weekly_avg(time_source: pd.DataFrame, countries: List[str]) -> pd.DataFr
         .filter_on("country_region == 'Guyana'", complement=True)
         .groupby("country_region")
         .resample("W")
-        .agg({"log_confirmed": "max", "log_delta_confirmed": "mean"})
+        .agg({"log_confirmed": "mean", "log_delta_confirmed": "mean"})
         .reset_index()
     )
     return weekly_avg
@@ -335,19 +338,20 @@ def get_weekly_avg(time_source: pd.DataFrame, countries: List[str]) -> pd.DataFr
 
 @st.cache(show_spinner=False)
 def _get_trajectory_data(time_source: pd.DataFrame) -> pd.DataFrame:
-    """[summary]
+    """Return DataFrame of top 10 countries wrt. number of confirmed cases.
+
+    The output of this function is used to build trajectory plots.
 
     Parameters
     ----------
     time_source : pd.DataFrame
-        [description]
+        Time series data, resulting from `get_time_series_cases()`.
 
     Returns
     -------
-    pd.DataFrame
-        [description]
+    time_series_top_10 : pd.DataFrame
+        Time series data for top 10 most affected countries.
     """
-    # TODO: Write docstring
     top_10 = (
         time_source[time_source["date"] == time_source["date"].max()]
         .sort_values(by="confirmed")["country_region"]

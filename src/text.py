@@ -1,4 +1,5 @@
 import pathlib
+from typing import Dict
 
 import pandas as pd
 import streamlit as st
@@ -22,19 +23,21 @@ def create_heatmap_text() -> str:
 
 
 def create_country_text_intro(world_source: pd.DataFrame, country: str) -> str:
-    # TODO: Write docstring
     # TODO: See if there is a better way to format string
-    """[summary]
+    """Return string containing text introductions for use in individual country pages.
+
+    The text is built from a standardised Markdown-file using summary statistics from the data
+    to generate a brief introduction to each country.
 
     Parameters
     ----------
     world_source : pd.DataFrame
-        [description]
+        Global summary infection data, resulting from `get_world_source`.
 
     Returns
     -------
-    str
-        [description]
+    text_intro : str
+        Brief country-specific text introducing summary statistics.
     """
     country_df = world_source[world_source["country_region"] == country]
     text_intro = COUNTRY_TEMPLATE.format(
@@ -50,17 +53,20 @@ def create_country_text_intro(world_source: pd.DataFrame, country: str) -> str:
 
 @st.cache(show_spinner=False)
 def create_world_text_intro(world_source) -> str:
-    """[summary]
+    """Return string containing text introductions for use in world summary page.
+
+    The text is built from a standardised Markdown-file using summary statistics from the data
+    to generate a brief introduction to global situation.
 
     Parameters
     ----------
-    world_source : [type]
-        [description]
+    world_source : pd.DataFrame
+        Global summary infection data, resulting from `get_world_source`.
 
     Returns
     -------
-    str
-        [description]
+    text_intro : str
+        Brief ctext introducing global summary statistics.
     """
     summary = world_source[
         ["date", "population", "confirmed", "deaths", "incident_rate"]
@@ -85,7 +91,19 @@ def create_world_text_intro(world_source) -> str:
 
 
 @st.cache(show_spinner=False)
-def create_country_intros(world_source):
+def create_country_intros(world_source: pd.DataFrame) -> Dict:
+    """Return dictionary containing text introductions of all countries.
+
+    Parameters
+    ----------
+    world_source : pd.DataFrame
+        Global summary infection data, resulting from `get_world_source`.
+
+    Returns
+    -------
+    Dict
+        Dictionary containing text intros (value) for each country (key).
+    """
     return {
         country: create_country_text_intro(world_source, country)
         for country in world_source["country_region"].unique()

@@ -276,22 +276,22 @@ def create_country_barplot(
 def create_multiselect_line_plot(
     interval_data: pd.DataFrame, countries: List, log: bool
 ) -> alt.Chart:
-    # TODO: Write docstring
-    """[summary]
+    """
+    Return alt.Chart of multi-select lineplot of number of confirmed cases
+    with a corresponding heatbar for each country.
 
     Parameters
     ----------
     interval_data : pd.DataFrame
-        [description]
+        Time series for a given interval.
     countries : List
-        [description]
+        List of country names.
     log : bool
-        [description]
+        Display number of confirmed cases on log scale.
 
     Returns
     -------
-    alt.Chart
-        [description]
+    multiline : alt.Chart
     """
     country_time_series = create_lineplot(interval_data, x_label="", log=log)
     heatbar = create_heatmap(
@@ -308,18 +308,16 @@ def create_multiselect_line_plot(
 
 
 def create_delta_barplots(interval_data: pd.DataFrame) -> alt.Chart:
-    # TODO: Write docstring
-    """[summary]
+    """Return alt.Chart barplot of `delta_confirmed`.
 
     Parameters
     ----------
     interval_data : pd.DataFrame
-        [description]
+        Time series data in given interval.
 
     Returns
     -------
-    alt.Chart
-        [description]
+    delta_chart : alt.Chart
     """
     delta_confirmed = create_country_barplot(
         interval_data=interval_data,
@@ -338,21 +336,25 @@ def create_delta_barplots(interval_data: pd.DataFrame) -> alt.Chart:
     return delta_chart
 
 
-def create_animated_trajectory_plot(data, x_max, y_max):
-    # TODO: Write docstring
-    """[summary]
+def create_animated_trajectory_plot(
+    data: pd.DataFrame, x_max: float, y_max: float
+) -> alt.Chart:
+    """Return alt.Chart of trajectory plot to be used in animation.
+
+    `x_max` and `y_max` are passed to fix plot size.
+
     Parameters
     ----------
-    data : [type]
-        [description]
-    x_max : [type]
-        [description]
-    y_max : [type]
-        [description]
+    data : pd.DataFrame
+        Weekly average data from `src.data.get_weekly_avg()`
+    x_max : float
+        Maximum x-value.
+    y_max : float
+        Maximum y-value.
+
     Returns
     -------
-    [type]
-        [description]
+    anim : alt.Chart
     """
     anim = (
         alt.Chart(data)
@@ -367,28 +369,41 @@ def create_animated_trajectory_plot(data, x_max, y_max):
     return anim
 
 
-def initialise_animated_trajectory_plot(weekly_avg, countries, x_max, y_max):
-    # TODO: Write docstring
-    """[summary]
+def initialise_animated_trajectory_plot(
+    weekly_avg: alt.Chart, x_max: float, y_max: float
+) -> alt.Chart:
+    """Return alt.Chart that initialises animated trajectory plot.
+
+    `x_max` and `y_max` are passed to fix plot size.
+
+    Parameters
+    ----------
+    weekly_avg : alt.Chart
+        Weekly average data from `src.data.get_weekly_avg()`
+    x_max : float
+        Maximum x-value.
+    y_max : float
+        Maximum y-value.
+
     Returns
     -------
-    [type]
-        [description]
+    chart : alt.Chart
     """
     t0 = weekly_avg[weekly_avg["date"] <= weekly_avg["date"].min()]
     chart = create_animated_trajectory_plot(t0, x_max, y_max)
     return chart
 
 
-def create_trajectory_plot(time_source: pd.DataFrame):
-    # TODO: Write docstring
+def create_trajectory_plot(time_source: pd.DataFrame) -> alt.Chart:
     # TODO: Add circle to final point?
     # TODO: Add text annotations?
-    """[summary]
+    """Return alt.Chart trajectory plot for top 10 most affected countries.
+
+    See https://www.youtube.com/watch?v=54XLXg4fYsc for inspiration.
+
     Returns
     -------
-    [type]
-        [description]
+    chart : alt.Chart
     """
     time_source_top_10 = _get_trajectory_data(time_source)
 
