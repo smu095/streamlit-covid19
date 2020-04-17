@@ -1,67 +1,19 @@
-import os
-from typing import List, Tuple, Union
+import pathlib
+from typing import Tuple
 
 import janitor
 import numpy as np
 import pandas as pd
+import streamlit as st
 
 from src.scrape import check_for_new_data
 
 _ = check_for_new_data()
 
-PATH = os.path.abspath(os.path.dirname(__file__))
-US_DATA = os.path.join(PATH, "../data/cases.csv")
-CASES_WORLDWIDE = os.path.join(PATH, "../data/cases_country.csv")
-TIME_SERIES = os.path.join(PATH, "../data/cases_time.csv")
-POP_DATA = os.path.join(PATH, "../data/worldbank-population-2018.csv")
-ISO_DATA = os.path.join(PATH, "../data/iso-codes.csv")
-
-COUNTRY_TEXT = os.path.join(PATH, "../data/country_text_template.txt")
-WORLD_TEXT = os.path.join(PATH, "../data/world_text_template.txt")
-with open(COUNTRY_TEXT, "r") as file:
-    COUNTRY_TEMPLATE = file.read()
-with open(WORLD_TEXT, "r") as file:
-    WORLD_TEMPLATE = file.read()
-
-
-def _get_world_population(path: str = POP_DATA) -> pd.DataFrame:
-    """Return DataFrame of world population."""
-    pop = pd.read_csv(path).rename_column("2018", "population")
-    return pop
-
-
-WORLD_POP = _get_world_population()
-
-
-def _get_iso_codes(path: str = ISO_DATA) -> pd.DataFrame:
-    """Return DataFrame of ISO 3166-1 country codes."""
-    iso_codes = pd.read_csv(path)
-    to_rename = {
-        "Russian Federation": "Russia",
-        "Bolivia (Plurinational State of)": "Bolivia",
-        "Korea, Republic of": "Korea, South",
-        "Brunei Darussalam": "Brunei",
-        "Moldova, Republic of": "Moldova",
-        "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
-        "Syrian Arab Republic": "Syria",
-        "Venezuela (Bolivarian Republic of)": "Venezuela",
-        "Tanzania, United Republic of": "Tanzania",
-        "Iran (Islamic Republic of)": "Iran",
-        "Côte d'Ivoire": "Cote d'Ivoire",
-        "Myanmar": "Burma",
-        "Congo": "Congo (Brazzaville)",
-        "Congo, Democratic Republic of the": "Congo (Kinshasa)",
-        "Lao People's Democratic Republic": "Laos",
-        "Taiwan, Province of China": "Taiwan*",
-        "United States of America": "US",
-        "Viet Nam": "Vietnam",
-        "Palestine, State of": "West Bank and Gaza",
-    }
-    iso_codes["country_region"] = iso_codes["country_region"].replace(to_rename)
-    return iso_codes
-
-
-ISO_CODES = _get_iso_codes()
+PATH = pathlib.Path("data/")
+US_DATA = PATH.joinpath("cases.csv")
+CASES_WORLDWIDE = PATH.joinpath("cases_country.csv")
+TIME_SERIES = PATH.joinpath("cases_time.csv")
 
 
 def _to_date(x: pd.Series) -> pd.Series:
@@ -69,9 +21,33 @@ def _to_date(x: pd.Series) -> pd.Series:
     return pd.to_datetime(x).normalize()
 
 
+@st.cache(show_spinner=False)
+def get_delta_confirmed(time_source: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return DataFrame of most recent delta confirmed (i.e. change in number) of
+    confirmed cases compared to previous day.
+
+    Parameters
+    ----------
+    time_source : pd.DataFrame
+        DataFrame returned from `_get_time_series_cases()`.
+
+    Returns
+    -------
+    delta_confirmed : pd.DateFrame
+        DataFrame of most recent delta confirmed by country.
+    """
+    delta_confirmed = time_source.loc[
+        time_source.groupby("country_region")["date"].idxmax(),
+        ["country_region", "date", "delta_confirmed"],
+    ].reset_index(drop=True)
+    return delta_confirmed
+
+
+@st.cache(show_spinner=False)
 def get_most_affected(world_source: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     """
-    Return DataFrame of top n most affected countries (as measued by number
+    Return DataFrame of top n most affected countries (as measured by number
     of confirmed cases).
 
     Note that the data is returned in tidy format.
@@ -132,99 +108,143 @@ def get_country_data(time_source: pd.DataFrame, country: str) -> Tuple:
     return time_data, first_case, last_update
 
 
-def _get_us_cases(csv: str = US_DATA) -> pd.DataFrame:
-    """Return DataFrame of US most recent cumulative infection data."""
-    cases = pd.read_csv(csv)
-    cleaned = (
-        cases.clean_names()
-        .transform_column("last_update", _to_date)
-        .filter_on("country_region == 'US'")
-    )
-    return cleaned
-
-
-def _get_worldwide_cases(csv: str = CASES_WORLDWIDE) -> pd.DataFrame:
+@st.cache(show_spinner=False)
+def _get_worldwide_cases(csv: pathlib.Path = CASES_WORLDWIDE) -> pd.DataFrame:
     """Return DataFrame of most recent worldwide cumulative infection data."""
+    # Read and perform basic cleaning
     cases = pd.read_csv(csv)
     cleaned = (
         cases.clean_names()
         .rename_column("long_", "lon")
-        .transform_column("last_update", _to_date)
-        .filter_on("country_region == 'Diamond Princess'", complement=True)
-        .filter_on("country_region == 'Holy See'", complement=True)
+        .rename_column("last_update", "date")
+        .transform_column("date", _to_date)
         .sort_values(by="country_region")
     )
 
-    iso_join = cleaned.merge(ISO_CODES, on="country_region")
-    pop_join = iso_join.merge(WORLD_POP, on="country_region")
+    # Remove rows that are not countries
+    worldwide = cleaned[~cleaned["iso3"].isna()]
 
-    pop_join["sick_pr_100k"] = (
-        pop_join["confirmed"] / pop_join["population"]
-    ) * 10 ** 5
-    pop_join["deaths_pr_100k"] = (pop_join["deaths"] / pop_join["population"]) * 10 ** 5
+    # Infer population
+    worldwide["population"] = worldwide["confirmed"] / (
+        worldwide["incident_rate"] / 10 ** 5
+    )
 
-    return pop_join
+    return worldwide
 
 
-def _get_time_series_cases(csv: str = TIME_SERIES) -> pd.DataFrame:
+def _get_us_cases(time_source: pd.DataFrame) -> pd.DataFrame:
+    """Return DataFrame of aggregated US cases."""
+    us = time_source.filter_on("country_region == 'US'")
+    population = us["population"].mean()
+    cols = list(us.columns)
+    grouped = us.groupby("date")
+
+    # Aggregate state-level information
+    sum_cols = [
+        "confirmed",
+        "deaths",
+        "recovered",
+        "active",
+        "delta_confirmed",
+        "delta_recovered",
+        "people_tested",
+        "people_hospitalized",
+    ]
+    max_cols = ["report_date"]
+    agg_df = pd.concat(
+        (grouped[sum_cols].sum(), grouped[max_cols].max()), axis=1
+    ).reset_index()
+
+    # Replace columns lost in aggregation
+    agg_df["country_region"] = "US"
+    agg_df["population"] = population
+    agg_df["uid"] = 840
+    agg_df["iso3"] = "USA"
+    agg_df["incident_rate"] = (agg_df["confirmed"] / agg_df["population"]) * 10 ** 5
+
+    # Return columns in correct order
+    us_data = agg_df[cols]
+
+    return us_data
+
+
+@st.cache(show_spinner=False)
+def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
     """Return time-series data of worldwide infections."""
     time_series = pd.read_csv(csv)
     cleaned = (
         time_series.clean_names()
+        .rename_column("report_date_string", "report_date")
         .rename_column("last_update", "date")
-        .transform_column("date", _to_date)
-        .remove_columns(["recovered", "active", "delta_recovered"])
+        .transform_columns(["date", "report_date"], _to_date)
+        .remove_columns(["fips", "province_state"])
     )
 
-    # Adding columns: delta_deaths, log_confirmed, log_delta_confirmed, days
-    cleaned["delta_deaths"] = cleaned.groupby("country_region")["deaths"].transform(
-        lambda x: x.diff(1).fillna(0)
-    )
-    cleaned["log_confirmed"] = np.where(
-        cleaned["confirmed"] >= 1, np.log(cleaned["confirmed"]), cleaned["confirmed"]
-    )
-    cleaned["log_delta_confirmed"] = np.where(
-        cleaned["delta_confirmed"] >= 1,
-        np.log(cleaned["delta_confirmed"]),
-        cleaned["delta_confirmed"],
-    )
+    # Remove rows that are not countries
+    cleaned = cleaned[~cleaned["iso3"].isna()]
 
-    # Merging population data
-    pop_join = cleaned.merge(WORLD_POP, how="left", on="country_region")
+    # Get population data
+    worldwide = _get_worldwide_cases()
+    cleaned = cleaned.merge(worldwide[["iso3", "population"]], how="left", on="iso3")
 
-    # Adding columns: sick_pr_100k, std_confirmed (std. dev.), norm_confirmed (normalised)
-    pop_join["sick_pr_100k"] = (
-        pop_join["confirmed"] / pop_join["population"]
+    # Aggregate US data
+    us_cases = _get_us_cases(cleaned)
+    world = cleaned.filter_on("country_region == 'US'", complement=True)
+    time_series = pd.concat((world, us_cases), axis=0)
+    time_series = time_series.sort_values(by="country_region").reset_index(drop=True)
+
+    # Adding columns: scaled_confirmed, delta_deaths, log_confirmed, log_delta_confirmed, mortality_rate, delta_pr_100k
+    time_series["scaled_confirmed"] = time_series.groupby("country_region")[
+        "confirmed"
+    ].transform(lambda x: (x - x.min()) / (x.max() - x.min()))
+    time_series["delta_deaths"] = time_series.groupby("country_region")[
+        "deaths"
+    ].transform(lambda x: x.diff(1).fillna(0))
+    time_series["log_confirmed"] = np.where(
+        time_series["confirmed"] >= 1,
+        np.log(time_series["confirmed"]),
+        time_series["confirmed"],
+    )
+    time_series["log_delta_confirmed"] = np.where(
+        time_series["delta_confirmed"] >= 1,
+        np.log(time_series["delta_confirmed"]),
+        time_series["delta_confirmed"],
+    )
+    time_series["mortality_rate"] = (
+        time_series["deaths"] / time_series["population"]
     ) * 10 ** 5
-    pop_join["delta_pr_100k"] = (
-        pop_join["delta_confirmed"] / pop_join["population"]
+    time_series["delta_pr_100k"] = (
+        time_series["delta_confirmed"] / time_series["population"]
     ) * 10 ** 5
 
-    unique_countries = tuple(pop_join["country_region"].unique())
-
-    return pop_join, unique_countries
+    return time_series
 
 
-def get_delta_confirmed(time_source: pd.DataFrame) -> pd.DataFrame:
-    """
-    Return DataFrame of most recent delta confirmed (i.e. change in number) of
-    confirmed cases compared to previous day.
+@st.cache(show_spinner=False)
+def get_world_source(delta_confirmed: pd.DataFrame) -> pd.DataFrame:
+    # TODO: Write docstring
+    """[summary]
 
     Parameters
     ----------
-    time_source : pd.DataFrame
-        DataFrame returned from `_get_time_series_cases()`.
+    delta_confirmed : pd.DataFrame
+        [description]
 
     Returns
     -------
-    delta_confirmed : pd.DateFrame
-        DataFrame of most recent delta confirmed by country.
+    pd.DataFrame
+        [description]
     """
-    delta_confirmed = time_source.loc[
-        time_source.groupby("country_region")["date"].idxmax(),
-        ["country_region", "date", "delta_confirmed"],
-    ].reset_index(drop=True)
-    return delta_confirmed
+    worldwide = _get_worldwide_cases()
+    world_source = worldwide.merge(
+        delta_confirmed[["delta_confirmed", "country_region"]],
+        on="country_region",
+        how="left",
+    )
+    world_source["delta_pr_100k"] = (
+        world_source["delta_confirmed"] / world_source["population"]
+    ) * 10 ** 5
+    return world_source
 
 
 def get_country_summary(world_source: pd.DataFrame, country: str) -> pd.DataFrame:
@@ -246,72 +266,37 @@ def get_country_summary(world_source: pd.DataFrame, country: str) -> pd.DataFram
     ].select_columns(
         [
             "country_region",
-            "last_update",
+            "date",
             "population",
             "confirmed",
             "deaths",
-            "sick_pr_100k",
+            "incident_rate",
         ]
     )
     return country_summary
 
 
-def create_country_text_intro(world_source: pd.DataFrame) -> str:
+def get_interval_data(
+    country_data: pd.DataFrame, start: pd.DatetimeIndex, end: pd.DatetimeIndex
+) -> pd.DataFrame:
     # TODO: Write docstring
-    # TODO: See if there is a better way to format string
     """[summary]
 
     Parameters
     ----------
-    world_source : pd.DataFrame
+    country_data : pd.DataFrame
+        [description]
+    start : pd.DatetimeIndex
+        [description]
+    end : pd.DatetimeIndex
         [description]
 
     Returns
     -------
-    str
+    pd.DataFrame
         [description]
     """
-    text_intro = COUNTRY_TEMPLATE.format(
-        last_update=world_source["last_update"].dt.strftime("%A %B %d, %Y").values[0],
-        country_region=world_source["country_region"].values[0],
-        confirmed=world_source["confirmed"].values[0],
-        population=world_source["population"].values[0],
-        sick_pr_100k=world_source["sick_pr_100k"].values[0],
-        deaths=world_source["deaths"].values[0],
+    date_mask = (country_data["date"].dt.date >= start) & (
+        country_data["date"].dt.date <= end
     )
-    return text_intro
-
-
-def create_world_text_intro(world_source) -> str:
-    """[summary]
-
-    Parameters
-    ----------
-    world_source : [type]
-        [description]
-
-    Returns
-    -------
-    str
-        [description]
-    """
-    summary = world_source[
-        ["last_update", "population", "confirmed", "deaths", "sick_pr_100k"]
-    ].agg(
-        {
-            "last_update": "unique",
-            "population": "sum",
-            "confirmed": "sum",
-            "deaths": "sum",
-            "sick_pr_100k": "sum",
-        }
-    )
-    text_intro = WORLD_TEMPLATE.format(
-        last_update=summary["last_update"].dt.strftime("%A %B %d, %Y").values[0],
-        confirmed=summary["confirmed"].values[0],
-        sick_pr_100k=(summary["confirmed"].values[0] / summary["population"].values[0])
-        * 10 ** 5,
-        deaths=summary["deaths"].values[0],
-        death_rate=(summary["deaths"].values[0] / summary["confirmed"].values[0]) * 100,
-    )
-    return text_intro
+    return country_data[date_mask]

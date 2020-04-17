@@ -1,27 +1,35 @@
-import requests
 import os
+import pathlib
+
 import pandas as pd
+import requests
 
 DATA = {
     "cases.csv": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases.csv",  # noqa: E501
     "cases_country.csv": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_country.csv",  # noqa: E501
     "cases_time.csv": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_time.csv",  # noqa: 501
 }
-FNAME = "data/last_commit.txt"
+PATH = pathlib.Path("data/")
+FNAME = PATH.joinpath("last_commit.txt")
 
 
 def get_last_commit_hash():
     """Returns latest commit hash from John Hopkins data repo."""
     url = "https://api.github.com/repos/CSSEGISandData/COVID-19/git/refs/heads/web-data"
     json_response = requests.get(url).json()
-    commit_hash = json_response['object']['sha'][:7]
+    commit_hash = json_response["object"]["sha"][:7]
 
     return commit_hash
 
 
 def check_for_updates():
     """Return True if we have already downloaded data from latest commit, else False."""
-    last_commit = get_last_commit_hash()
+    try:
+        last_commit = get_last_commit_hash()
+    except Exception as e:
+        print("Failed to get most recent commit hash.")
+        print(e)
+        return False
 
     if not os.path.isfile(FNAME):
         with open(FNAME, "w") as file:
@@ -45,6 +53,6 @@ def check_for_new_data():
     if download:
         for fname, url in DATA.items():
             print(f"Downloading {fname}...")
-            _ = pd.read_csv(url).to_csv(f"data/{fname}")
+            _ = pd.read_csv(url).to_csv(f"data/{fname}", index=False)
         print("Downloads complete.")
     return None

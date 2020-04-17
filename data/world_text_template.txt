@@ -1,1 +1,0 @@
-As of **{last_update}**, the number of **confirmed cases worldwide is {confirmed:,.0f}**. This means that {sick_pr_100k:,.1f} people are confirmed sick per 100,000. So far, **{deaths:,.0f} have died** as a result of the contracting covid-19. This results in a **death rate of {death_rate:.2f} percent** among confirmed cases.

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Optional
+from typing import List, Optional
 
 import altair as alt
 import pandas as pd
@@ -7,15 +7,15 @@ from vega_datasets import data
 
 from src.data import get_most_affected
 
-MAPPINGS = [
-    ("sick_pr_100k", "Cases pr. 100.000"),
-    ("deaths_pr_100k", "Deaths pr. 100.000"),
-    ("confirmed", "Confirmed cases"),
-    ("delta_confirmed", "Delta confirmed cases"),
-    ("recovered", "Recovered patients"),
-]
-COLUMN_TO_TITLE = OrderedDict(MAPPINGS)
-TITLE_TO_COLUMN = OrderedDict((title, col) for col, title in COLUMN_TO_TITLE.items())
+COLUMN_TO_TITLE = OrderedDict(
+    [
+        ("incident_rate", "Cases pr. 100.000"),
+        ("mortality_rate", "Deaths pr. 100.000"),
+        ("confirmed", "Confirmed cases"),
+        ("delta_confirmed", "Delta confirmed cases"),
+        ("recovered", "Recovered patients"),
+    ]
+)
 
 
 def create_map_plot(
@@ -52,7 +52,7 @@ def create_map_plot(
         )
         .transform_lookup(
             lookup="id",
-            from_=alt.LookupData(world_source, "id", [f"{column}", "country_region"]),
+            from_=alt.LookupData(world_source, "uid", [f"{column}", "country_region"]),
         )
     )
 
@@ -220,7 +220,7 @@ def create_heatmap(
             alt.X("monthdate(date):T", title=x_label, axis=alt.Axis(orient=x_orient)),
             alt.Y("country_region:N", title="", axis=alt.Axis(orient=y_orient)),
             color=alt.Color(
-                f"{column}:Q", legend=None, scale=alt.Scale(scheme="lightgreyred")
+                f"{column}:Q", legend=None, scale=alt.Scale(scheme="lightgreyred"),
             ),
             tooltip=[f"{column}:Q"],
         )
@@ -271,3 +271,68 @@ def create_country_barplot(
     barplot = base.properties(height=150, width=600)
 
     return barplot
+
+
+def create_multiselect_line_plot(
+    interval_data: pd.DataFrame, countries: List, log: bool
+) -> alt.Chart:
+    # TODO: Write docstring
+    """[summary]
+
+    Parameters
+    ----------
+    interval_data : pd.DataFrame
+        [description]
+    countries : List
+        [description]
+    log : bool
+        [description]
+
+    Returns
+    -------
+    alt.Chart
+        [description]
+    """
+    country_time_series = create_lineplot(interval_data, x_label="", log=log)
+    heatbar = create_heatmap(
+        interval_data,
+        column="delta_pr_100k",
+        title="",
+        width=600,
+        height=20 * (len(countries) + 1),
+        x_label="Daily change in confirmed cases per 100.000",
+        x_orient="bottom",
+    )
+    multiline = alt.vconcat(country_time_series, heatbar)
+    return multiline
+
+
+def create_delta_barplots(interval_data: pd.DataFrame) -> alt.Chart:
+    # TODO: Write docstring
+    """[summary]
+
+    Parameters
+    ----------
+    interval_data : pd.DataFrame
+        [description]
+
+    Returns
+    -------
+    alt.Chart
+        [description]
+    """
+    delta_confirmed = create_country_barplot(
+        interval_data=interval_data,
+        y="delta_confirmed",
+        x_label="",
+        y_label="Delta confirmed",
+    )
+    delta_deaths = create_country_barplot(
+        interval_data=interval_data,
+        y="delta_deaths",
+        x_label="Date",
+        y_label="Delta deaths",
+        colour=True,
+    )
+    delta_chart = alt.vconcat(delta_confirmed, delta_deaths)
+    return delta_chart
