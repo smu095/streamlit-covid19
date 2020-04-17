@@ -140,7 +140,10 @@ def create_top_n_barplot(world_source: pd.DataFrame) -> alt.Chart:
 
 
 def create_lineplot(
-    time_source: pd.DataFrame, x_label: str = "Date", log: bool = False
+    time_source: pd.DataFrame,
+    x_label: str = "Date",
+    color: str = "country_region",
+    log: bool = False,
 ) -> alt.Chart:
     """Return animated alt.Chart lineplot of confirmed cases by date.
 
@@ -154,7 +157,7 @@ def create_lineplot(
     """
     confirmed = "log_confirmed" if log else "confirmed"
     highlight = alt.selection(
-        type="single", on="mouseover", fields=["country_region"], nearest=True
+        type="single", on="mouseover", fields=[f"{color}"], nearest=True
     )
     time_base = (
         alt.Chart(time_source)
@@ -162,7 +165,7 @@ def create_lineplot(
         .encode(
             x=alt.X("date:T", title=x_label),
             y=alt.Y(f"{confirmed}:Q", title="Confirmed cases"),
-            color=alt.Color("country_region:N", legend=None),
+            color=alt.Color(f"{color}:N", legend=None),
         )
     )
     time_points = (
@@ -170,7 +173,7 @@ def create_lineplot(
         .encode(
             opacity=alt.value(0),
             tooltip=[
-                alt.Tooltip("country_region:N", title="Country"),
+                alt.Tooltip(f"{color}:N", title="Country"),
                 alt.Tooltip(f"{confirmed}:N", title="Confirmed cases"),
             ],
         )
@@ -451,3 +454,66 @@ def create_trajectory_plot(time_source: pd.DataFrame) -> alt.Chart:
     )
 
     return chart
+
+
+def create_world_areaplot(
+    time_source: pd.DataFrame, x_label: str = "Date", color: str = "continent_name",
+) -> pd.DataFrame:
+    """[summary]
+
+    Parameters
+    ----------
+    time_source : pd.DataFrame
+        [description]
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
+    time_continent = (
+        time_source.groupby(["continent_name", "date"])[["confirmed", "log_confirmed"]]
+        .sum()
+        .reset_index()
+    )
+
+    world_areaplot = (
+        alt.Chart(time_continent)
+        .mark_area()
+        .encode(
+            x=alt.X("date:T", title=None),
+            y=alt.Y("confirmed:Q", title="Confirmed cases",),
+            color="continent_name:N",
+            tooltip=[
+                alt.Tooltip("continent_name:N"),
+                alt.Tooltip("date:T"),
+                alt.Tooltip("confirmed:Q"),
+            ],
+        )
+        .properties(width=600, height=200)
+    )
+
+    world_areaplot_norm = (
+        alt.Chart(time_continent)
+        .mark_area()
+        .encode(
+            x=alt.X("date:T", title=x_label),
+            y=alt.Y(
+                "confirmed:Q",
+                stack="normalize",
+                title="Percentage of confirmed cases",
+                axis=alt.Axis(format=".0%"),
+            ),
+            color="continent_name:N",
+        )
+        .properties(width=600, height=200)
+    )
+
+    world_area = (
+        alt.vconcat(world_areaplot, world_areaplot_norm)
+        .configure_legend(orient="top", title=None)
+        .properties(title="Total number of confirmed cases worldwide")
+        .configure_title(anchor="middle", offset=20)
+    )
+
+    return world_area

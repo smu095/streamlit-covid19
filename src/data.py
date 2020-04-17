@@ -17,11 +17,25 @@ PATH = pathlib.Path("data/")
 US_DATA = PATH.joinpath("cases.csv")
 CASES_WORLDWIDE = PATH.joinpath("cases_country.csv")
 TIME_SERIES = PATH.joinpath("cases_time.csv")
+CONTINENTS = PATH.joinpath("continent_mapping.csv")
 
 
 def _to_date(x: pd.Series) -> pd.Series:
     """Return normalised DateTime series."""
     return pd.to_datetime(x).normalize()
+
+
+def _get_continents(csv: pathlib.Path = CONTINENTS) -> pd.DataFrame:
+    """Return DataFrame of mappings from ISO3 code to continent name."""
+    continents = pd.read_csv(csv)
+    kosovo = pd.DataFrame({"continent_name": ["Europe"], "iso3": ["XKS"]})
+    continents = pd.concat((continents, kosovo), axis=0)
+    counts = continents["iso3"].value_counts()
+    continents.loc[
+        continents["iso3"].isin(counts[counts > 1].index), "continent_name"
+    ] = "Europe"
+    continents = continents.drop_duplicates()
+    return continents
 
 
 @st.cache(show_spinner=False)
@@ -138,36 +152,7 @@ def _get_worldwide_cases(csv: pathlib.Path = CASES_WORLDWIDE) -> pd.DataFrame:
 def _get_us_cases(time_source: pd.DataFrame) -> pd.DataFrame:
     """Return DataFrame of aggregated US cases."""
     us = time_source.filter_on("country_region == 'US'")
-    population = us["population"].mean()
-    cols = list(us.columns)
-    grouped = us.groupby("date")
-
-    # Aggregate state-level information
-    sum_cols = [
-        "confirmed",
-        "deaths",
-        "recovered",
-        "active",
-        "delta_confirmed",
-        "delta_recovered",
-        "people_tested",
-        "people_hospitalized",
-    ]
-    max_cols = ["report_date"]
-    agg_df = pd.concat(
-        (grouped[sum_cols].sum(), grouped[max_cols].max()), axis=1
-    ).reset_index()
-
-    # Replace columns lost in aggregation
-    agg_df["country_region"] = "US"
-    agg_df["population"] = population
-    agg_df["uid"] = 840
-    agg_df["iso3"] = "USA"
-    agg_df["incident_rate"] = (agg_df["confirmed"] / agg_df["population"]) * 10 ** 5
-
-    # Return columns in correct order
-    us_data = agg_df[cols]
-
+    us_data = us[us["province_state"].isna()]
     return us_data
 
 
@@ -180,7 +165,7 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
         .rename_column("report_date_string", "report_date")
         .rename_column("last_update", "date")
         .transform_columns(["date", "report_date"], _to_date)
-        .remove_columns(["fips", "province_state"])
+        .remove_columns("fips")
     )
 
     # Remove rows that are not countries
@@ -193,7 +178,7 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
     # Aggregate US data
     us_cases = _get_us_cases(cleaned)
     world = cleaned.filter_on("country_region == 'US'", complement=True)
-    time_series = pd.concat((world, us_cases), axis=0)
+    time_series = pd.concat((world, us_cases), axis=0).remove_columns("province_state")
     time_series = time_series.sort_values(by=["country_region", "date"]).reset_index(
         drop=True
     )
@@ -222,7 +207,9 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
         time_series["delta_confirmed"] / time_series["population"]
     ) * 10 ** 5
 
-    return time_series
+    time_source = time_series.merge(_get_continents(), how="left", on="iso3")
+
+    return time_source
 
 
 @st.cache(show_spinner=False)
@@ -246,10 +233,12 @@ def get_world_source(delta_confirmed: pd.DataFrame) -> pd.DataFrame:
         delta_confirmed[["delta_confirmed", "country_region"]],
         on="country_region",
         how="left",
-    )
+    ).merge(_get_continents(), how="left", on="iso3")
+
     world_source["delta_pr_100k"] = (
         world_source["delta_confirmed"] / world_source["population"]
     ) * 10 ** 5
+
     return world_source
 
 

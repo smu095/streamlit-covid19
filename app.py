@@ -20,6 +20,7 @@ from src.plots import (
     create_multiselect_line_plot,
     create_top_n_barplot,
     create_trajectory_plot,
+    create_world_areaplot,
     create_world_barplot,
     initialise_animated_trajectory_plot,
 )
@@ -65,8 +66,9 @@ def main():
 
             # World time-series
             # TODO: Refactor to use log scale in alt.Scale?
-            log = st.checkbox("Log scale")
-            st.altair_chart(create_lineplot(time_source, log=log))
+            st.altair_chart(
+                create_world_areaplot(time_source=time_source, color="continent_name")
+            )
 
             # World summary
             st.altair_chart(create_world_barplot(world_source))
