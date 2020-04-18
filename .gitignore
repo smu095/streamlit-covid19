@@ -6,5 +6,5 @@ notebooks/
 .venv/
 *.egg-info/
 __pycache__/
-data/cases_*.csv
+data/cases*.csv
 data/*.txt
