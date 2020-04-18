@@ -93,7 +93,7 @@ def main():
             )
 
             anim = initialise_animated_trajectory_plot(
-                weekly_avg=weekly_avg, countries=top_10, x_max=x_max, y_max=y_max
+                weekly_avg=weekly_avg, x_max=x_max, y_max=y_max
             )
 
             start_animation = st.button("Start animation")
@@ -102,7 +102,7 @@ def main():
 
             if reset:
                 anim = initialise_animated_trajectory_plot(
-                    weekly_avg=weekly_avg, countries=top_10, x_max=x_max, y_max=y_max,
+                    weekly_avg=weekly_avg, x_max=x_max, y_max=y_max,
                 )
 
             if start_animation:

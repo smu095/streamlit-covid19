@@ -135,7 +135,7 @@ def _get_worldwide_cases(csv: pathlib.Path = CASES_WORLDWIDE) -> pd.DataFrame:
         .rename_column("long_", "lon")
         .rename_column("last_update", "date")
         .transform_column("date", _to_date)
-        .sort_values(by="country_region")
+        .sort_values(by=["country_region", "date"])
     )
 
     # Remove rows that are not countries
@@ -162,10 +162,11 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
     time_series = pd.read_csv(csv)
     cleaned = (
         time_series.clean_names()
+        .filter_on("country_region != 'US' | province_state.isna()")
+        .remove_columns(["fips", "province_state"])
         .rename_column("report_date_string", "report_date")
         .rename_column("last_update", "date")
         .transform_columns(["date", "report_date"], _to_date)
-        .remove_columns("fips")
     )
 
     # Remove rows that are not countries
@@ -173,13 +174,11 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
 
     # Get population data
     worldwide = _get_worldwide_cases()
-    cleaned = cleaned.merge(worldwide[["iso3", "population"]], how="left", on="iso3")
-
-    # Aggregate US data
-    us_cases = _get_us_cases(cleaned)
-    world = cleaned.filter_on("country_region == 'US'", complement=True)
-    time_series = pd.concat((world, us_cases), axis=0).remove_columns("province_state")
-    time_series = time_series.sort_values(by=["country_region", "date"]).reset_index(
+    merged = (
+        cleaned.merge(worldwide[["iso3", "population"]], how="left", on="iso3")
+        .merge(_get_continents(), how="left", on="iso3")
+    )
+    time_series = merged.sort_values(by=["country_region", "date"]).reset_index(
         drop=True
     )
 
@@ -207,9 +206,7 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
         time_series["delta_confirmed"] / time_series["population"]
     ) * 10 ** 5
 
-    time_source = time_series.merge(_get_continents(), how="left", on="iso3")
-
-    return time_source
+    return time_series
 
 
 @st.cache(show_spinner=False)
