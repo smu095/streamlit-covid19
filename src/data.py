@@ -1,6 +1,6 @@
 import pathlib
 import warnings
-from typing import List, Tuple
+from typing import Tuple
 
 import janitor
 import numpy as np
