@@ -10,6 +10,7 @@ from src.data import (
     get_time_series_cases,
     get_weekly_avg,
     get_world_source,
+    get_heatmap_data,
 )
 from src.plots import (
     COLUMN_TO_TITLE,
@@ -33,8 +34,6 @@ def main():
         delta_confirmed = get_delta_confirmed(time_source)
         world_source = get_world_source(delta_confirmed)
         country_intros = create_country_intros(world_source)
-
-    top_10 = world_source.sort_values(by="confirmed")["country_region"].tail(10)
 
     st.sidebar.title("Explore")
     options = st.sidebar.radio(
@@ -83,7 +82,7 @@ def main():
         if view == "Infection trajectory":
             st.title("Trajectory of infections")
             st.markdown("Some text here describing the inspiration (minutephysics).")
-            top_10 = world_source.sort_values(by="confirmed")["country_region"].tail(10)
+
             weekly_avg = get_weekly_avg(time_source=time_source, countries=top_10)
             dates = weekly_avg["date"].unique()
             x_max, y_max = (
@@ -116,22 +115,17 @@ def main():
         if view == "Infection heatmap":
             st.header("Rate of change at a glance")
             st.markdown(create_heatmap_text())
-            # TODO: Add to COLUMN_TO_TITLE dict
-            column = st.selectbox(
-                "Select column to display", ["scaled_confirmed", "scaled_delta_pr_100k"]
-            )
-            options = st.multiselect(
-                "Select countries to display", world_source["country_region"].unique()
-            )
 
-            top_10_countries = time_source[time_source["country_region"].isin(top_10)]
+            heatmap_data, initial_countries, country_options = get_heatmap_data(
+                time_source
+            )
+            options = st.multiselect("Select countries to display", country_options)
             heatmap_chart = st.altair_chart(
                 create_heatmap(
-                    top_10_countries,
-                    column=column,
+                    heatmap_data,
+                    column="scaled_confirmed",
                     width=800,
-                    height=25
-                    * (len(options) + top_10_countries["country_region"].nunique()),
+                    height=25 * (len(options) + len(initial_countries)),
                 )
             )
             if len(options) > 0:

@@ -174,10 +174,9 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
 
     # Get population data
     worldwide = _get_worldwide_cases()
-    merged = (
-        cleaned.merge(worldwide[["iso3", "population"]], how="left", on="iso3")
-        .merge(_get_continents(), how="left", on="iso3")
-    )
+    merged = cleaned.merge(
+        worldwide[["iso3", "population"]], how="left", on="iso3"
+    ).merge(_get_continents(), how="left", on="iso3")
     time_series = merged.sort_values(by=["country_region", "date"]).reset_index(
         drop=True
     )
@@ -350,3 +349,32 @@ def _get_trajectory_data(time_source: pd.DataFrame) -> pd.DataFrame:
     time_source_top_10["week"] = time_source_top_10["date"].dt.week
 
     return time_source_top_10
+
+
+@st.cache(show_spinner=False)
+def get_heatmap_data(time_source: pd.DataFrame) -> pd.DataFrame:
+    """[summary]
+
+    Parameters
+    ----------
+    time_source : pd.DataFrame
+        [description]
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
+    # TODO: Write docstring
+    top_10 = (
+        time_source[time_source["date"] == time_source["date"].max()]
+        .sort_values(by="confirmed")
+        .tail(10)["country_region"]
+        .unique()
+    )
+    top_10_time_source = time_source[time_source["country_region"].isin(top_10)]
+    initial_countries = top_10_time_source["country_region"].unique()
+    country_options = sorted(
+        list(set(time_source["country_region"].unique()) - set(initial_countries))
+    )
+    return top_10_time_source, initial_countries, country_options
