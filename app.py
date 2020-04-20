@@ -6,24 +6,21 @@ import streamlit as st
 from src.data import (
     get_country_data,
     get_delta_confirmed,
+    get_heatmap_data,
     get_interval_data,
     get_time_series_cases,
-    get_weekly_avg,
     get_world_source,
-    get_heatmap_data,
 )
 from src.plots import (
     COLUMN_TO_TITLE,
     create_delta_barplots,
     create_heatmap,
-    create_lineplot,
     create_map_plot,
     create_multiselect_line_plot,
     create_top_n_barplot,
     create_trajectory_plot,
     create_world_areaplot,
     create_world_barplot,
-    initialise_animated_trajectory_plot,
 )
 from src.text import create_country_intros, create_heatmap_text, create_world_text_intro
 
@@ -75,41 +72,9 @@ def main():
             # Most affected nations
             st.altair_chart(create_top_n_barplot(world_source))
 
-            # Trajectory plot for top 10 nations
-            st.altair_chart(create_trajectory_plot(time_source))
-
-        # Trajectory plot
+        # Infection trajectories
         if view == "Infection trajectory":
-            st.title("Trajectory of infections")
-            st.markdown("Some text here describing the inspiration (minutephysics).")
-
-            weekly_avg = get_weekly_avg(time_source=time_source, countries=top_10)
-            dates = weekly_avg["date"].unique()
-            x_max, y_max = (
-                weekly_avg[["log_confirmed", "log_delta_confirmed"]]
-                .max()
-                .apply(np.ceil)
-            )
-
-            anim = initialise_animated_trajectory_plot(
-                weekly_avg=weekly_avg, x_max=x_max, y_max=y_max
-            )
-
-            start_animation = st.button("Start animation")
-            reset = st.button("Reset")
-            chart = st.altair_chart(anim)
-
-            if reset:
-                anim = initialise_animated_trajectory_plot(
-                    weekly_avg=weekly_avg, x_max=x_max, y_max=y_max,
-                )
-
-            if start_animation:
-                for d in dates[1:]:
-                    animated = weekly_avg[weekly_avg["date"] <= d]
-                    chart.add_rows(animated)
-                    time.sleep(0.5)
-                start_animation = False
+            st.altair_chart(create_trajectory_plot(time_source))
 
         # World heatmap
         if view == "Infection heatmap":

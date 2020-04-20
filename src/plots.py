@@ -339,67 +339,7 @@ def create_delta_barplots(interval_data: pd.DataFrame) -> alt.Chart:
     return delta_chart
 
 
-def create_animated_trajectory_plot(
-    data: pd.DataFrame, x_max: float, y_max: float
-) -> alt.Chart:
-    """Return alt.Chart of trajectory plot to be used in animation.
-
-    `x_max` and `y_max` are passed to fix plot size.
-
-    Parameters
-    ----------
-    data : pd.DataFrame
-        Weekly average data from `src.data.get_weekly_avg()`
-    x_max : float
-        Maximum x-value.
-    y_max : float
-        Maximum y-value.
-
-    Returns
-    -------
-    anim : alt.Chart
-    """
-    anim = (
-        alt.Chart(data)
-        .mark_line(point=True)
-        .encode(
-            x=alt.X("log_confirmed:Q", scale=alt.Scale(domain=[0, x_max])),
-            y=alt.Y("log_delta_confirmed:Q", scale=alt.Scale(domain=[0, y_max])),
-            color=alt.Color("country_region:N", legend=None),
-        )
-        .properties(width=600, height=400)
-    )
-    return anim
-
-
-def initialise_animated_trajectory_plot(
-    weekly_avg: alt.Chart, x_max: float, y_max: float
-) -> alt.Chart:
-    """Return alt.Chart that initialises animated trajectory plot.
-
-    `x_max` and `y_max` are passed to fix plot size.
-
-    Parameters
-    ----------
-    weekly_avg : alt.Chart
-        Weekly average data from `src.data.get_weekly_avg()`
-    x_max : float
-        Maximum x-value.
-    y_max : float
-        Maximum y-value.
-
-    Returns
-    -------
-    chart : alt.Chart
-    """
-    t0 = weekly_avg[weekly_avg["date"] <= weekly_avg["date"].min()]
-    chart = create_animated_trajectory_plot(t0, x_max, y_max)
-    return chart
-
-
 def create_trajectory_plot(time_source: pd.DataFrame) -> alt.Chart:
-    # TODO: Add circle to final point?
-    # TODO: Add text annotations?
     """Return alt.Chart trajectory plot for top 10 most affected countries.
 
     See https://www.youtube.com/watch?v=54XLXg4fYsc for inspiration.

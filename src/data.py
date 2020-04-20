@@ -292,38 +292,6 @@ def get_interval_data(
     return country_data[date_mask]
 
 
-def get_weekly_avg(time_source: pd.DataFrame, countries: List[str]) -> pd.DataFrame:
-    """
-    Return DataFrame of weekly averages of `log_confirmed` and `log_delta_confirmed` for a list
-    of given countries.
-
-    The output of this function is used to build trajectory plots.
-
-    Parameters
-    ----------
-    time_source : pd.DataFrame
-        Time series data, resulting from `get_time_series_cases()`
-    countries : List[str]
-        List of country names to include.
-
-    Returns
-    -------
-    weekly_avg : pd.DataFrame
-        DataFrame of `log_confirmed` and `log_delta_confirmed` weekly averages for `countries`.
-    """
-    # TODO: Refactor to use original scale, but use scale="log" in alt.Chart?
-    weekly_avg = (
-        time_source[time_source["country_region"].isin(countries)]
-        .set_index("date")
-        .filter_on("country_region == 'Guyana'", complement=True)
-        .groupby("country_region")
-        .resample("W")
-        .agg({"log_confirmed": "mean", "log_delta_confirmed": "mean"})
-        .reset_index()
-    )
-    return weekly_avg
-
-
 @st.cache(show_spinner=False)
 def _get_trajectory_data(time_source: pd.DataFrame) -> pd.DataFrame:
     """Return DataFrame of top 10 countries wrt. number of confirmed cases.
