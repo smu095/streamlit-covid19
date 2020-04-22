@@ -34,9 +34,15 @@ $ python3 src/scrape.py
 $ streamlit run app.py
 ```
 
+Alternatively, simply run the follwowig shell script:
+
+```bash
+$ ./start.sh
+```
+
 ### Run containerised version
 
-Alternatively, run the containerised of the app. To do this, first make sure you have [Docker](https://www.docker.com/get-started) installed. Once installed, navigate to the local repository and run the `run.sh` shell script, like this:
+Alternatively, run the containerised version of the app. To do this, first make sure you have [Docker](https://www.docker.com/get-started) installed. Once installed, navigate to the local repository and run the `run.sh` shell script, like this:
 
 ```bash
 $ cd path/to/local/repo
