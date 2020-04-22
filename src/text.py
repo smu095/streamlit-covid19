@@ -4,22 +4,45 @@ from typing import Dict
 import pandas as pd
 import streamlit as st
 
+DATA_PATH = pathlib.Path("data/")
 PATH = pathlib.Path("templates/")
-COUNTRY_TEXT = PATH.joinpath("country_text_template.md")
-WORLD_TEXT = PATH.joinpath("world_text_template.md")
-INFECTION_TEXT = PATH.joinpath("heatmap_text_template.md")
+HEATMAP_TEXT = PATH.joinpath("heatmap_text_template.md")
+HEATMAP_INTRO = PATH.joinpath("heatmap_intro_template.md")
 
-with COUNTRY_TEXT.open(mode="r") as file:
-    COUNTRY_TEMPLATE = file.read()
-with WORLD_TEXT.open(mode="r") as file:
-    WORLD_TEMPLATE = file.read()
+
+def read_text(filename: str) -> str:
+    """Returns Markdown file as string."""
+    markdown = PATH.joinpath(filename)
+    with markdown.open(mode="r") as file:
+        text = file.read()
+    return text
+
+
+COUNTRY_TEMPLATE = read_text("country_text_template.md")
+WORLD_TEMPLATE = read_text("world_text_template.md")
+SIDEBAR_TEMPLATE = read_text("sidebar_intro.md")
+
+
+def _get_last_update():
+    """Return date and time of last update."""
+    with DATA_PATH.joinpath("cases_country.csv").open("r") as f:
+        column = f.readline().split(",").index("Last_Update")
+        last_update = f.readline().split(",")[column]
+    return last_update
 
 
 def create_heatmap_text() -> str:
     """Return text intro to Infection heatmap page."""
-    with INFECTION_TEXT.open(mode="r") as file:
+    with HEATMAP_TEXT.open(mode="r") as file:
         infection_template = file.read()
     return infection_template
+
+
+def create_heatmap_intro() -> str:
+    """Return intro to Heatmap section."""
+    with HEATMAP_INTRO.open("r") as file:
+        heatmap_intro = file.read()
+    return heatmap_intro
 
 
 def create_country_text_intro(world_source: pd.DataFrame, country: str) -> str:
@@ -108,3 +131,48 @@ def create_country_intros(world_source: pd.DataFrame) -> Dict:
         country: create_country_text_intro(world_source, country)
         for country in world_source["country_region"].unique()
     }
+
+
+@st.cache(show_spinner=False)
+def create_sidebar_intro() -> str:
+    """Return intro text for sidebar."""
+    last_update = _get_last_update()
+    sidebar_intro = SIDEBAR_TEMPLATE.format(last_update=last_update)
+    return sidebar_intro
+
+
+@st.cache(show_spinner=False)
+def create_home_intro() -> str:
+    """Return text for Home section."""
+    return read_text("intro_template.md")
+
+
+@st.cache(show_spinner=False)
+def create_geo_intro() -> str:
+    """Return text for geographic plot in World section."""
+    return read_text("geo_text_template.md")
+
+
+@st.cache(show_spinner=False)
+def create_number_confirmed_intro() -> str:
+    """Return text for number of confirmed cases plot in World section."""
+    return read_text("num_cases_template.md")
+
+
+@st.cache(show_spinner=False)
+def create_most_affected_intro() -> str:
+    """Return text for number of confirmed cases plot in World section."""
+    return read_text("most_affected_template.md")
+
+
+@st.cache(show_spinner=False)
+def create_country_cases_intro() -> str:
+    """Return text for number of confirmed cases plot in World section."""
+    return read_text("country_cases_template.md")
+
+
+@st.cache(show_spinner=False)
+def create_country_deltas_intro(country: str) -> str:
+    """Return text for number of confirmed cases plot in World section."""
+    text = read_text("country_deltas_template.md").format(country=country)
+    return text

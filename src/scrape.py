@@ -13,6 +13,7 @@ DATA = {
 FNAME = pathlib.Path("data/last_commit.txt")
 FNAME.parent.mkdir(parents=True, exist_ok=True)
 
+
 def get_last_commit_hash():
     """Returns latest commit hash from John Hopkins data repo."""
     url = "https://api.github.com/repos/CSSEGISandData/COVID-19/git/refs/heads/web-data"
@@ -56,3 +57,7 @@ def check_for_new_data():
             _ = pd.read_csv(url).to_csv(f"data/{fname}", index=False)
         print("Downloads complete.")
     return None
+
+
+if __name__ == "__main__":
+    _ = check_for_new_data()

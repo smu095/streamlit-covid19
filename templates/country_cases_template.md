@@ -1,0 +1,1 @@
+The following plot consists of two parts. The topmost plot shows the time series for the number of confirmed cases of COVID-19. The bottom plot shows a heatmap of new confirmed cases per day. Hover your mousepointer over the graphs to get more details. Use the dropdown box to compare countries.

@@ -7,11 +7,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from src.scrape import check_for_new_data
-
 warnings.filterwarnings("ignore")
-
-_ = check_for_new_data()
 
 PATH = pathlib.Path("data/")
 US_DATA = PATH.joinpath("cases.csv")
@@ -185,6 +181,9 @@ def get_time_series_cases(csv: pathlib.Path = TIME_SERIES) -> pd.DataFrame:
     time_series["scaled_confirmed"] = time_series.groupby("country_region")[
         "confirmed"
     ].transform(lambda x: (x - x.min()) / (x.max() - x.min()))
+    time_series["scaled_delta_confirmed"] = time_series.groupby("country_region")[
+        "delta_confirmed"
+    ].transform(lambda x: (x - x.min()) / (x.max() - x.min()))
     time_series["delta_deaths"] = time_series.groupby("country_region")[
         "deaths"
     ].transform(lambda x: x.diff(1).fillna(0))
@@ -320,20 +319,19 @@ def _get_trajectory_data(time_source: pd.DataFrame) -> pd.DataFrame:
 
 
 @st.cache(show_spinner=False)
-def get_heatmap_data(time_source: pd.DataFrame) -> pd.DataFrame:
-    """[summary]
+def get_heatmap_data(time_source: pd.DataFrame) -> Tuple:
+    """Return DataFrame for use in infection heatmap plot.
 
     Parameters
     ----------
     time_source : pd.DataFrame
-        [description]
+        Worldwide time-series data.
 
     Returns
     -------
-    pd.DataFrame
-        [description]
+    Tuple
+        Returns DataFrame, list of default countries, list of remaining countries
     """
-    # TODO: Write docstring
     top_10 = (
         time_source[time_source["date"] == time_source["date"].max()]
         .sort_values(by="confirmed")

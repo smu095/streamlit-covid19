@@ -9,4 +9,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Run app
-CMD streamlit run app.py
+CMD ./start.sh

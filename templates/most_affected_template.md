@@ -1,0 +1,1 @@
+The following plot shows the status of COVID-19 cases for the top 10 most affected nations. Hover your mouse pointer over the bars for more details.

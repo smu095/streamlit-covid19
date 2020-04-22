@@ -102,7 +102,7 @@ def create_world_barplot(world_source: pd.DataFrame) -> alt.Chart:
             color=alt.Color("status:N"),
             tooltip=["count:Q"],
         )
-        .properties(title="Summary statistics", width=600, height=200)
+        .properties(width=600, height=200)
         .configure_legend(orient="top")
     )
     return bar_world
@@ -192,7 +192,7 @@ def create_lineplot(
 
 def create_heatmap(
     selection: pd.DataFrame,
-    column: str = "delta_confirmed",
+    column: str = "scaled_delta_confirmed",
     title: str = None,
     x_label: str = "",
     x_orient: str = "top",
@@ -209,13 +209,14 @@ def create_heatmap(
     selection : pd.DataFrame
         Countries to compare, passed by st.multiselect in `app.py`.
     column : str
-        Value to plot. Default is 'norm_confirmed', which is the proportion
-        of confirmed cases relative to confirmed cases in most recent update.
+        Value to plot. Default is 'scaled_confirmed', which is the standardised number
+        of confirmed cases.
 
     Returns
     -------
     heatmap : alt.Chart
     """
+    tooltip_title = column.replace("_", " ").capitalize()
     heatmap = (
         alt.Chart(selection)
         .mark_rect()
@@ -225,7 +226,10 @@ def create_heatmap(
             color=alt.Color(
                 f"{column}:Q", legend=None, scale=alt.Scale(scheme="lightgreyred"),
             ),
-            tooltip=[f"{column}:Q"],
+            tooltip=[
+                alt.Tooltip("date:T", title="Date"),
+                alt.Tooltip(f"{column}:Q", title=f"{tooltip_title}"),
+            ],
         )
     )
 
@@ -303,7 +307,7 @@ def create_multiselect_line_plot(
         title="",
         width=600,
         height=20 * (len(countries) + 1),
-        x_label="Daily change in confirmed cases per 100.000",
+        x_label="New confirmed cases per 100.000",
         x_orient="bottom",
     )
     multiline = alt.vconcat(country_time_series, heatbar)

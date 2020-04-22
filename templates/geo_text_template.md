@@ -1,0 +1,1 @@
+Use the dropdown box below to display different statistics. Hover your mouse pointer over the map to read more information about specific countries.

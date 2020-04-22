@@ -1,0 +1,1 @@
+The following plots show the number of new confirmed cases and deaths per day for {country}.
