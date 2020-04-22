@@ -14,14 +14,12 @@ The raw data pulled from the [2019 Novel Coronavirus COVID-19 (2019-nCoV) Data R
 
 Navigation is enabled via the sidebar to the left. The sidebar provides a couple of options.
 
-Clicking **World** will display plots based on global summary statistics for each country. There are three sub-options:
+The **World** option provides plots based on global summary statistics for each country. Clicking **World** yields two sub-options:
 
 1. **Summary**: Gives a general overview of the worldwide situation based on aggregated statistics.
 
-2. **Infection trajectory**: Gives a visual overview of the infection trajectory for the top 10 most affected nations. Based on ["How To Tell If We're Beating COVID-19"](https://www.youtube.com/watch?v=54XLXg4fYsc) by **minutephysics**.
+2. **Infection heatmap**: Gives a visual overview of the number of confirmed cases by time in the top 10 most affected nations.
 
-3. **Infection heatmap**: Gives a visual overview of the number of confirmed cases by time in the top 10 most affected nations.
+Selecting **Countries** yields time series data for each individual country in the data set. Note that we have removed rows that do not have a valid ISO3 country code (this excludes data from e.g. the cruise ship Diamond Princess).
 
-Selecting **Countries** yields time-series data for each individual country in the data set. Note that we have removed rows that do not have a valid ISO3 country code (this excludes data from e.g. the cruise ship Diamond Princess).
-
-Clicking **Countries** will provide some additional options, namely **Start date** and **End date**, which determine the range of the time-series. By default, the time-series starts from the date of the first confirmed case.
+Clicking **Countries** will provide some additional options, namely **Start date** and **End date**, which determine the range of the time series. By default, the time series starts from the date of the first confirmed case.

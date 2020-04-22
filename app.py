@@ -6,7 +6,7 @@ from src.data import (
     get_heatmap_data,
     get_interval_data,
     get_time_series_cases,
-    get_world_source
+    get_world_source,
 )
 from src.plots import (
     COLUMN_TO_TITLE,
@@ -17,12 +17,13 @@ from src.plots import (
     create_top_n_barplot,
     create_trajectory_plot,
     create_world_areaplot,
-    create_world_barplot
+    create_world_barplot,
 )
 from src.text import (
     create_country_cases_intro,
     create_country_deltas_intro,
     create_country_intros,
+    create_country_trajectory_intro,
     create_geo_intro,
     create_heatmap_intro,
     create_heatmap_text,
@@ -30,7 +31,7 @@ from src.text import (
     create_most_affected_intro,
     create_number_confirmed_intro,
     create_sidebar_intro,
-    create_world_text_intro
+    create_world_text_intro,
 )
 
 
@@ -52,8 +53,7 @@ def main():
     if options == "World":
         st.sidebar.subheader("Options")
         view = st.sidebar.selectbox(
-            "Which data would you like to see?",
-            ["Summary", "Infection trajectory", "Infection heatmap"],
+            "Which data would you like to see?", ["Summary", "Infection heatmap"],
         )
 
         if view == "Summary":
@@ -84,12 +84,6 @@ def main():
             st.subheader("These nations are the most affected")
             st.markdown(create_most_affected_intro())
             st.altair_chart(create_top_n_barplot(world_source))
-
-        # Infection trajectories
-        if view == "Infection trajectory":
-            st.header("Infection trajectory")
-            st.markdown("Some explanatory text here.")
-            st.altair_chart(create_trajectory_plot(time_source))
 
         # World heatmap
         if view == "Infection heatmap":
@@ -171,6 +165,10 @@ def main():
                 )
                 compare_country = compare_data[compare_mask]
                 country_line_chart.add_rows(compare_country)
+
+        st.subheader("Infection trajectory")
+        st.markdown(create_country_trajectory_intro(country))
+        st.altair_chart(create_trajectory_plot(country_data))
 
         # Barplots: Delta confirmed and delta deaths
         st.subheader("Number of daily confirmed cases and deaths since first patient")

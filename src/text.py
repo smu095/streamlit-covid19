@@ -171,8 +171,13 @@ def create_country_cases_intro() -> str:
     return read_text("country_cases_template.md")
 
 
-@st.cache(show_spinner=False)
 def create_country_deltas_intro(country: str) -> str:
     """Return text for number of confirmed cases plot in World section."""
     text = read_text("country_deltas_template.md").format(country=country)
+    return text
+
+
+def create_country_trajectory_intro(country: str) -> str:
+    """Return text for number of confirmed cases plot in World section."""
+    text = read_text("country_trajectory_template.md").format(country=country)
     return text
