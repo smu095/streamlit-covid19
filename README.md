@@ -34,7 +34,7 @@ $ python3 src/scrape.py
 $ streamlit run app.py
 ```
 
-Alternatively, simply run the follwowig shell script:
+You can also simply run the following shell script:
 
 ```bash
 $ ./start.sh
