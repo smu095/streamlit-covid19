@@ -53,4 +53,4 @@ Finally, open your favourite browser and go to `http://localhost:8501` to open t
 
 ## Known issues
 
-* The heatbar on for countries doesn't appear to be interactive in the containerised version. It is unclear why.
+* The heatbar subplot for countries doesn't appear to be interactive in the containerised version. It is unclear why.
