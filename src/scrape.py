@@ -1,4 +1,3 @@
-import os
 import pathlib
 
 import pandas as pd
@@ -23,30 +22,41 @@ def get_last_commit_hash():
     return commit_hash
 
 
+def check_if_commit_exists():
+    """
+    Return latest commit. If last_commit.txt doesn't exist, create it and return 'no commit hash'.
+
+    Note the side effect of creating last_commit.txt if it doesn't exist.
+    """
+    try:
+        with FNAME.open("r") as f:
+            commit = f.read()
+    except FileNotFoundError:
+        commit = "no commit hash"
+        with FNAME.open("w") as f:
+            f.write(commit)
+    return commit
+
+
 def check_for_updates():
     """Return True if we have already downloaded data from latest commit, else False."""
+    commit = check_if_commit_exists()
     try:
         last_commit = get_last_commit_hash()
+        if commit == last_commit:
+            print(f"Data from commit '{last_commit}' already downloaded.")
+            return False
+        else:
+            print(
+                f"New data available. Commit '{last_commit}' saved to last_commit.txt."
+            )
+            with FNAME.open("w") as write_file:
+                write_file.write(last_commit)
+            return True
     except Exception as e:
         print("Failed to get most recent commit hash.")
         print(e)
         return False
-
-    if not FNAME.exists():
-        with FNAME.open("w") as f:
-            f.write("")
-
-    with FNAME.open("r") as f:
-        commit = f.read()
-
-    if commit == last_commit:
-        print(f"Data from commit '{last_commit}' already downloaded.")
-        return False
-    else:
-        print(f"New data available. Commit '{last_commit}' saved to last_commit.txt.")
-        with FNAME.open("w") as write_file:
-            write_file.write(last_commit)
-        return True
 
 
 def check_for_new_data():

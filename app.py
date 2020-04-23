@@ -75,7 +75,6 @@ def main():
             # World time-series
             st.subheader("Number of confirmed cases by continent")
             st.markdown(create_number_confirmed_intro())
-            # TODO: Refactor to use log scale in alt.Scale?
             st.altair_chart(
                 create_world_areaplot(time_source=time_source, color="continent_name")
             )
@@ -166,9 +165,11 @@ def main():
                 compare_country = compare_data[compare_mask]
                 country_line_chart.add_rows(compare_country)
 
+        # Infection trajectory
         st.subheader("Infection trajectory")
         st.markdown(create_country_trajectory_intro(country))
-        st.altair_chart(create_trajectory_plot(country_data))
+        linear = st.checkbox("Linear scale")
+        st.altair_chart(create_trajectory_plot(country_data, linear))
 
         # Barplots: Delta confirmed and delta deaths
         st.subheader("Number of daily confirmed cases and deaths since first patient")

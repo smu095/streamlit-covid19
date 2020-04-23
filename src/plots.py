@@ -155,7 +155,7 @@ def create_lineplot(
     -------
     time_chart : alt.Chart
     """
-    confirmed = "log_confirmed" if log else "confirmed"
+    scale = "log" if log else "linear"
     highlight = alt.selection(
         type="single", on="mouseover", fields=[f"{color}"], nearest=True
     )
@@ -164,7 +164,9 @@ def create_lineplot(
         .mark_line()
         .encode(
             x=alt.X("date:T", title=x_label),
-            y=alt.Y(f"{confirmed}:Q", title="Confirmed cases"),
+            y=alt.Y(
+                f"confirmed:Q", title="Confirmed cases", scale=alt.Scale(type=scale)
+            ),
             color=alt.Color(f"{color}:N", legend=None),
         )
     )
@@ -174,7 +176,7 @@ def create_lineplot(
             opacity=alt.value(0),
             tooltip=[
                 alt.Tooltip(f"{color}:N", title="Country"),
-                alt.Tooltip(f"{confirmed}:N", title="Confirmed cases"),
+                alt.Tooltip(f"confirmed:Q", title="Confirmed cases"),
             ],
         )
         .add_selection(highlight)
@@ -343,7 +345,9 @@ def create_delta_barplots(interval_data: pd.DataFrame) -> alt.Chart:
     return delta_chart
 
 
-def create_trajectory_plot(time_source: pd.DataFrame) -> alt.Chart:
+def create_trajectory_plot(
+    time_source: pd.DataFrame, linear: bool = False
+) -> alt.Chart:
     """Return alt.Chart trajectory plot for top 10 most affected countries.
 
     See https://www.youtube.com/watch?v=54XLXg4fYsc for inspiration.
@@ -353,6 +357,7 @@ def create_trajectory_plot(time_source: pd.DataFrame) -> alt.Chart:
     chart : alt.Chart
     """
     time_source_top_10 = _get_trajectory_data(time_source)
+    scale = "linear" if linear else "log"
 
     nearest = alt.selection(
         type="single", nearest=True, on="mouseover", fields=["country_region"],
@@ -363,23 +368,28 @@ def create_trajectory_plot(time_source: pd.DataFrame) -> alt.Chart:
         .mark_line()
         .encode(
             x=alt.X(
-                "mean_confirmed:Q",
-                scale=alt.Scale(type="log"),
-                title="Avg. weekly increase in confirmed cases",
+                "max_confirmed:Q",
+                scale=alt.Scale(type=scale),
+                title="Number of new confirmed cases per week",
             ),
             y=alt.Y(
-                "mean_delta_confirmed:Q",
-                scale=alt.Scale(type="log"),
-                title="Avg. weekly confirmed cases",
+                "sum_delta_confirmed:Q",
+                scale=alt.Scale(type=scale),
+                title="Total number of confirmed cases per week",
             ),
-            tooltip=["country_region"],
+            tooltip=[
+                alt.Tooltip("country_region:N", title="Country"),
+                alt.Tooltip("week:Q", title="Weeks since outbreak"),
+                alt.Tooltip("max_confirmed:Q", title="Total confirmed cases"),
+                alt.Tooltip("sum_delta_confirmed:Q", title="New confirmed cases",),
+            ],
             size=alt.condition(~nearest, alt.value(1), alt.value(3)),
             color=alt.Color("country_region:N", legend=None),
         )
         .transform_filter((alt.datum.confirmed > 0) & (alt.datum.delta_confirmed > 0))
         .transform_aggregate(
-            mean_confirmed="mean(confirmed)",
-            mean_delta_confirmed=("mean(delta_confirmed)"),
+            max_confirmed="max(confirmed)",
+            sum_delta_confirmed=("sum(delta_confirmed)"),
             groupby=["country_region", "week"],
         )
     )
