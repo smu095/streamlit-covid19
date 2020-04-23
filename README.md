@@ -47,4 +47,5 @@ Finally, open your favourite browser and go to `http://localhost:8501` to open t
 
 ## Known issues
 
-* The heatbar subplot for countries doesn't appear to be interactive in the containerised version. It is unclear why.
+* The heatbar subplot for **Countries: Confirmed cases since first patient** doesn't appear to be interactive in the containerised version. It is unclear why.
+* Log-transformation doesn't work when multiple countries are selected in **Countries: Confirmed cases since first patient**.
